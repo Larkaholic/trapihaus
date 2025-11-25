@@ -24,6 +24,8 @@ export default function Listing() {
 	const [listingId, setListingId] = useState<string | null>(null);
 	const [reviews, setReviews] = useState<Review[]>([]);
 	const [reviewsLoading, setReviewsLoading] = useState(false);
+	const [lightboxOpen, setLightboxOpen] = useState(false);
+	const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
 	// Get listing ID from URL hash
 	useEffect(() => {
@@ -95,6 +97,9 @@ export default function Listing() {
 			"https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80",
 		])
 	];
+
+	// Combine all images for lightbox
+	const allImages = [mainImage, ...thumbs];
 
 	// Amenity icon mapping
 	const getAmenityIcon = (amenityKey: string) => {
@@ -532,33 +537,108 @@ export default function Listing() {
 				<section>
 					<div className="bg-white rounded-[28px] p-6 shadow-lg border border-[#F3F4F6]">
 						<div className="flex flex-col gap-6">
-							{/* Big image on top */}
-							<div className="relative w-full h-[480px] rounded-[28px] overflow-hidden shadow-sm">
-								<AppImage
-									src={mainImage}
-									alt="Cozy bedroom with single bed, warm lighting, and window view"
-									fillParent
-									priority={true}
-									sizes="(max-width: 768px) 100vw, 60vw"
-									className="object-cover rounded-[28px]"
-								/>
+				{/* Big image on top */}
+						<div 
+							className="relative w-full h-[480px] rounded-[28px] overflow-hidden shadow-sm cursor-pointer group"
+							onClick={() => { setCurrentImageIndex(0); setLightboxOpen(true); }}
+						>
+							<AppImage
+								src={mainImage}
+								alt="Cozy bedroom with single bed, warm lighting, and window view"
+								fillParent
+								priority={true}
+								sizes="(max-width: 768px) 100vw, 60vw"
+								className="object-cover rounded-[28px] group-hover:scale-105 transition-transform duration-300"
+							/>
+							<div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 rounded-[28px] flex items-center justify-center">
+								<svg className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+								</svg>
 							</div>
-
-							{/* Thumbnails below (square, dynamic) */}
-							<div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-								{thumbs.map((t, i) => (
-									<div key={t} className="relative overflow-hidden rounded-[18px] aspect-square">
-										<AppImage src={t} alt={`Bedroom thumbnail ${i + 1}`} fillParent className="object-cover rounded-[18px]" />
-										{i === thumbs.length - 1 && (
-											<div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-sm font-medium rounded-[18px]">View all Photos</div>
-										)}
-									</div>
-								))}
-							</div>
+						</div>				{/* Thumbnails below (square, dynamic) */}
+						<div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+							{thumbs.map((t, i) => (
+								<div 
+									key={t} 
+									className="relative overflow-hidden rounded-[18px] aspect-square cursor-pointer group"
+									onClick={() => { setCurrentImageIndex(i + 1); setLightboxOpen(true); }}
+								>
+									<AppImage src={t} alt={`Bedroom thumbnail ${i + 1}`} fillParent className="object-cover rounded-[18px] group-hover:scale-110 transition-transform duration-300" />
+									{i === thumbs.length - 1 && (
+										<div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 flex items-center justify-center text-white text-sm font-medium rounded-[18px] transition-colors duration-300">View all Photos</div>
+									)}
+								</div>
+							))}
+						</div>
 						</div>
 					</div>
 				</section>
 			</div>
+
+			{/* Lightbox Modal */}
+			{lightboxOpen && (
+				<div 
+					className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+					onClick={() => setLightboxOpen(false)}
+				>
+					{/* Close button */}
+					<button
+						className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10"
+						onClick={() => setLightboxOpen(false)}
+						aria-label="Close lightbox"
+					>
+						<svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+						</svg>
+					</button>
+
+					{/* Previous button */}
+					{currentImageIndex > 0 && (
+						<button
+							className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10 bg-black/50 hover:bg-black/70 rounded-full p-3"
+							onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => prev - 1); }}
+							aria-label="Previous image"
+						>
+							<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+							</svg>
+						</button>
+					)}
+
+					{/* Next button */}
+					{currentImageIndex < allImages.length - 1 && (
+						<button
+							className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10 bg-black/50 hover:bg-black/70 rounded-full p-3"
+							onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => prev + 1); }}
+							aria-label="Next image"
+						>
+							<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+							</svg>
+						</button>
+					)}
+
+					{/* Image container */}
+					<div 
+						className="relative max-w-7xl max-h-[90vh] w-full h-full flex items-center justify-center px-16"
+						onClick={(e) => e.stopPropagation()}
+					>
+						<div className="relative w-full h-full flex items-center justify-center">
+							<AppImage
+								src={allImages[currentImageIndex]}
+								alt={`Property image ${currentImageIndex + 1}`}
+								width={1200}
+								height={800}
+								className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
+							/>
+						</div>
+						{/* Image counter */}
+						<div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-sm">
+							{currentImageIndex + 1} / {allImages.length}
+						</div>
+					</div>
+				</div>
+			)}
 			</>
 			)}
 		</main>
