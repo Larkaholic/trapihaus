@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import AppImage from "../components/ui/AppImage";
 import { getListing } from "@/lib/services/listings";
+import { getListingReviews } from "@/lib/services/reviews";
 import type { PropertyListing } from "@/types/listing";
+import type { Review } from "@/types/review";
 
 // Dynamically import PropertyMap to avoid SSR issues with Leaflet
 const PropertyMap = dynamic(() => import("./PropertyMap"), { ssr: false });
@@ -20,6 +22,8 @@ export default function Listing() {
 	const [listingData, setListingData] = useState<PropertyListing | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [listingId, setListingId] = useState<string | null>(null);
+	const [reviews, setReviews] = useState<Review[]>([]);
+	const [reviewsLoading, setReviewsLoading] = useState(false);
 
 	// Get listing ID from URL hash
 	useEffect(() => {
@@ -42,6 +46,19 @@ export default function Listing() {
 			try {
 				const data = await getListing(listingId);
 				setListingData(data);
+
+				// Fetch reviews for this listing
+				if (data?.id) {
+					setReviewsLoading(true);
+					try {
+						const listingReviews = await getListingReviews(data.id);
+						setReviews(listingReviews);
+					} catch (reviewError) {
+						console.error("Failed to fetch reviews:", reviewError);
+					} finally {
+						setReviewsLoading(false);
+					}
+				}
 			} catch (error) {
 				console.error("Failed to fetch listing details:", error);
 			} finally {
@@ -149,14 +166,20 @@ export default function Listing() {
 		return labelMap[amenityKey] || amenityKey.charAt(0).toUpperCase() + amenityKey.slice(1);
 	};
 
-	const reviews = Array.from({ length: 3 }, () => ({
-		name: "Reynold Galvin",
-		initials: "RG",
-		date: "September 2025",
-		rating: 5,
-		text:
-			"Loakan Heights Residences felt like home. The place was clean, safe, and very affordable. Perfect for my semester stay in Baguio, and the host was super accommodating. I'll definitely book again through Trapihauss!",
-	}));
+	// Helper to get initials from name
+	const getInitials = (name: string) => {
+		return name
+			.split(' ')
+			.map(n => n[0])
+			.join('')
+			.toUpperCase()
+			.slice(0, 2);
+	};
+
+	// Helper to format date
+	const formatReviewDate = (date: Date) => {
+		return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+	};
 
 	return (
 		<main className="max-w-full mx-auto px-6 py-10 bg-[#F5F5F5] mb-[80px]">
@@ -448,23 +471,45 @@ export default function Listing() {
 					<div className="bg-white rounded-[28px] p-6 shadow-md border border-[#F3F4F6]">
 						<div className="flex items-center justify-between">
 							<h3 className="text-lg font-semibold">Reviews</h3>
-							<div className="flex items-center gap-2 text-sm text-gray-600">
+							<div className="flex items-center gap-2 text-sm">
 								<svg className="w-4 h-4 text-yellow-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
 									<path d="M12 .587l3.668 7.431L23.4 9.748l-5.7 5.556L18.82 24 12 19.897 5.18 24l1.12-8.696L.6 9.748l7.732-1.73z" />
 								</svg>
-								<span className="font-medium">4.6</span>
-								<span className="text-gray-400 text-xs">(17 Reviews)</span>
+								<span className="font-medium">{displayRating.toFixed(1)}</span>
+								<span className="text-gray-400 text-xs">({listingData?.reviewCount || 0} Reviews)</span>
 							</div>
 						</div>
 						<div className="mt-4 divide-y divide-gray-100">
-							{reviews.map((r, idx) => (
-								<div key={idx} className="py-5">
+							{reviewsLoading ? (
+								<div className="py-8 text-center text-gray-500">
+									<p>Loading reviews...</p>
+								</div>
+							) : reviews.length === 0 ? (
+								<div className="py-8 text-center text-gray-500">
+									<p>No reviews yet. Be the first to review this property!</p>
+								</div>
+							) : (
+								reviews.map((r) => (
+								<div key={r.id} className="py-5">
 									<div className="flex items-start gap-3 mb-2">
-										<div className="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-sm font-semibold">{r.initials}</div>
+										{r.userAvatar ? (
+											<AppImage 
+												src={r.userAvatar} 
+												alt={r.userName}
+												width={40}
+												height={40}
+												className="rounded-full object-cover"
+												style={{ width: '40px', height: '40px' }}
+											/>
+										) : (
+											<div className="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-sm font-semibold">
+												{getInitials(r.userName)}
+											</div>
+										)}
 										<div className="flex-1">
 											<div className="flex items-center justify-between">
-												<p className="text-sm font-medium">{r.name}</p>
-												<p className="text-xs text-gray-500">{r.date}</p>
+												<p className="text-sm font-medium">{r.userName}</p>
+												<p className="text-xs text-gray-500">{formatReviewDate(r.createdAt)}</p>
 											</div>
 											<div className="flex items-center gap-1 text-yellow-500 my-1">
 												{Array.from({ length: r.rating }).map((_, i) => (
@@ -473,11 +518,12 @@ export default function Listing() {
 													</svg>
 												))}
 											</div>
-											<p className="text-sm text-gray-600 leading-relaxed">“{r.text}”</p>
+											<p className="text-sm text-gray-600 leading-relaxed">&quot;{r.comment}&quot;</p>
 										</div>
 									</div>
 								</div>
-							))}
+								))
+							)}
 						</div>
 					</div>
 				</aside>
