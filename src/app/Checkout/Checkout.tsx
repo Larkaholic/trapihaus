@@ -7,6 +7,7 @@ import { getFirebaseAuth } from "@/lib/auth/firebaseClient";
 import { onAuthStateChanged } from "firebase/auth";
 import { createReservation } from "@/lib/services/reservations";
 import type { CreateReservationData } from "@/types/reservation";
+import { markListingUnavailable, getListing } from "@/lib/services/listings";
 
 export default function Checkout() {
 	const searchParams = useSearchParams();
@@ -71,6 +72,8 @@ export default function Checkout() {
 	const [confirmed, setConfirmed] = useState(false);
 	const [userId, setUserId] = useState<string | null>(null);
 	const [processing, setProcessing] = useState(false);
+	const [listingData, setListingData] = useState<{maxGuests?: number; bedrooms?: number} | null>(null);
+	const [loadingListing, setLoadingListing] = useState(true);
 
 	const CURRENCY = String.fromCharCode(0x20b1);
 
@@ -95,6 +98,30 @@ export default function Checkout() {
 		});
 		return () => unsubscribe();
 	}, [router, firstName, email]);
+
+	// Fetch listing data for validation
+	useEffect(() => {
+		async function fetchListing() {
+			if (!urlListingId) {
+				setLoadingListing(false);
+				return;
+			}
+			try {
+				const listing = await getListing(urlListingId);
+				if (listing) {
+					setListingData({
+						maxGuests: listing.guests,
+						bedrooms: listing.bedrooms
+					});
+				}
+			} catch (error) {
+				console.error("Failed to fetch listing:", error);
+			} finally {
+				setLoadingListing(false);
+			}
+		}
+		fetchListing();
+	}, [urlListingId]);
 
 	const nights = useMemo(() => {
 		const ci = new Date(checkIn);
@@ -132,6 +159,12 @@ export default function Checkout() {
 
 		if (!urlListingId || !urlHostId || !urlHostName || !urlHostEmail) {
 			alert("Missing property information. Please go back and try again.");
+			return;
+		}
+
+		// Validate guest count against property limits
+		if (listingData?.maxGuests && guests > listingData.maxGuests) {
+			alert(`This property can only accommodate ${listingData.maxGuests} ${listingData.maxGuests === 1 ? 'guest' : 'guests'}. Please adjust your booking.`);
 			return;
 		}
 
@@ -173,6 +206,10 @@ export default function Checkout() {
 
 			const reservationId = await createReservation(reservationData);
 			console.log("✅ Reservation created:", reservationId);
+			
+			// Mark accommodation as unavailable (single accommodation booking)
+			await markListingUnavailable(urlListingId);
+			console.log("✅ Listing marked as unavailable:", urlListingId);
 			
 			// Generate display reference
 			const d = new Date();
@@ -240,13 +277,16 @@ export default function Checkout() {
 									<span>{formatDate(new Date(checkOut).toISOString())}</span>
 								</div>
 							</div>
-							<div>
-								<p className="text-gray-500">Guests</p>
-								<div className="mt-1 flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 bg-gray-50">
-									<UserIcon />
-									<span>{guests} Adults</span>
-								</div>
+						<div>
+							<p className="text-gray-500">Guests</p>
+							<div className={`mt-1 flex items-center gap-2 rounded-lg border px-3 py-2 ${listingData?.maxGuests && guests > listingData.maxGuests ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'}`}>
+								<UserIcon />
+								<span>{guests} Adults</span>
+								{listingData?.maxGuests && guests > listingData.maxGuests && (
+									<span className="ml-auto text-xs text-red-600 font-medium">Exceeds limit ({listingData.maxGuests} max)</span>
+								)}
 							</div>
+						</div>
 						</div>
 						<div className="mt-5 flex flex-wrap gap-3">
 							<button className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white">

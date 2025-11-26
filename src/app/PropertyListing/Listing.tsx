@@ -27,6 +27,9 @@ export default function Listing() {
 	const [lightboxOpen, setLightboxOpen] = useState(false);
 	const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+	// Get today's date in YYYY-MM-DD format for min date validation
+	const today = new Date().toISOString().split('T')[0];
+
 	// Get listing ID from URL hash
 	useEffect(() => {
 		const hash = window.location.hash.slice(1); // Remove the # symbol
@@ -214,6 +217,24 @@ export default function Listing() {
 							</svg>
 							{displayLocation}
 						</span>
+						<span className="inline-flex items-center gap-1 text-xs">
+							<svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+								<rect x="3" y="3" width="7" height="7"/>
+								<rect x="14" y="3" width="7" height="7"/>
+								<rect x="14" y="14" width="7" height="7"/>
+								<rect x="3" y="14" width="7" height="7"/>
+							</svg>
+							{listingData?.bedrooms || 1} {listingData?.bedrooms === 1 ? 'Bedroom' : 'Bedrooms'}
+						</span>
+						<span className="inline-flex items-center gap-1 text-xs">
+							<svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+								<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+								<circle cx="9" cy="7" r="4"/>
+								<path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+								<path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+							</svg>
+							Max {listingData?.guests || 2} {listingData?.guests === 1 ? 'Guest' : 'Guests'}
+						</span>
 					</div>
 				</div>
 				<div className="flex items-center gap-3">
@@ -266,13 +287,20 @@ export default function Listing() {
 									<line x1="8" y1="2" x2="8" y2="6"/>
 									<line x1="3" y1="10" x2="21" y2="10"/>
 								</svg>
-								<input
-									type="date"
-									value={checkIn}
-									onChange={(e) => setCheckIn(e.target.value)}
-									placeholder="mm/dd/yyyy"
-									className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm"
-								/>
+							<input
+								type="date"
+								value={checkIn}
+								min={today}
+								onChange={(e) => {
+									setCheckIn(e.target.value);
+									// Reset checkout if it's before new check-in
+									if (checkOut && e.target.value && new Date(checkOut) <= new Date(e.target.value)) {
+										setCheckOut('');
+									}
+								}}
+								placeholder="mm/dd/yyyy"
+								className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm"
+							/>
 							</div>
 							<div className="relative">
 								<svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -281,13 +309,14 @@ export default function Listing() {
 									<line x1="8" y1="2" x2="8" y2="6"/>
 									<line x1="3" y1="10" x2="21" y2="10"/>
 								</svg>
-								<input
-									type="date"
-									value={checkOut}
-									onChange={(e) => setCheckOut(e.target.value)}
-									placeholder="mm/dd/yyyy"
-									className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm"
-								/>
+							<input
+								type="date"
+								value={checkOut}
+								min={checkIn || today}
+								onChange={(e) => setCheckOut(e.target.value)}
+								placeholder="mm/dd/yyyy"
+								className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm"
+							/>
 							</div>
 						</div>
 
@@ -307,8 +336,12 @@ export default function Listing() {
 									<button
 										type="button"
 										aria-label="increase guests"
-										onClick={() => setGuests((g) => g + 1)}
-										className="w-7 h-7 rounded-md bg-gray-100"
+										onClick={() => {
+											const maxGuests = listingData?.guests || 2;
+											setGuests((g) => Math.min(maxGuests, g + 1));
+										}}
+										className="w-7 h-7 rounded-md bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+										disabled={guests >= (listingData?.guests || 2)}
 									>
 										+
 									</button>
@@ -317,22 +350,40 @@ export default function Listing() {
 									onClick={() => {
 										// Validate inputs and compute nights
 										try {
-											const ci = checkIn ? new Date(checkIn) : null;
-											const co = checkOut ? new Date(checkOut) : null;
-											if (!ci || !co) {
-												setErrorMsg("Please select check‑in and check‑out dates.");
-												setQuote(null);
-												return;
-											}
-											const ms = co.getTime() - ci.getTime();
-											const nights = Math.ceil(ms / (1000 * 60 * 60 * 24));
-											if (Number.isNaN(nights) || nights <= 0) {
-												setErrorMsg("Please choose a valid date range.");
-												setQuote(null);
-												return;
-											}
+										const ci = checkIn ? new Date(checkIn) : null;
+										const co = checkOut ? new Date(checkOut) : null;
+										if (!ci || !co) {
+											setErrorMsg("Please select check‑in and check‑out dates.");
+											setQuote(null);
+											return;
+										}
+										const todayDate = new Date();
+										todayDate.setHours(0, 0, 0, 0);
+										if (ci < todayDate) {
+											setErrorMsg("Check-in date cannot be in the past.");
+											setQuote(null);
+											return;
+										}
+										if (co <= ci) {
+											setErrorMsg("Check-out date must be after check-in date.");
+											setQuote(null);
+											return;
+										}
+										const ms = co.getTime() - ci.getTime();
+										const nights = Math.ceil(ms / (1000 * 60 * 60 * 24));
+										if (Number.isNaN(nights) || nights <= 0) {
+											setErrorMsg("Please choose a valid date range.");
+											setQuote(null);
+											return;
+										}
 											if (guests <= 0) {
 												setErrorMsg("Please select at least 1 guest.");
+												setQuote(null);
+												return;
+											}
+											const maxGuests = listingData?.guests || 2;
+											if (guests > maxGuests) {
+												setErrorMsg(`This property can accommodate a maximum of ${maxGuests} ${maxGuests === 1 ? 'guest' : 'guests'}.`);
 												setQuote(null);
 												return;
 											}
