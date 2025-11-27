@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icons in Leaflet
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -155,7 +157,13 @@ export default function BrowseMap({ accommodations }: BrowseMapProps) {
           </button>
           
           <div className="relative w-full h-40">
-            <img src={selectedAccommodation.image} alt={selectedAccommodation.name} className="w-full h-full object-cover" />
+            <Image 
+              src={selectedAccommodation.image} 
+              alt={selectedAccommodation.name} 
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 400px"
+            />
             {selectedAccommodation.verified && (
               <div className="absolute top-3 left-3 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
                 ✓ Verified

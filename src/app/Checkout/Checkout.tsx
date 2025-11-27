@@ -73,7 +73,6 @@ export default function Checkout() {
 	const [userId, setUserId] = useState<string | null>(null);
 	const [processing, setProcessing] = useState(false);
 	const [listingData, setListingData] = useState<{maxGuests?: number; bedrooms?: number} | null>(null);
-	const [loadingListing, setLoadingListing] = useState(true);
 
 	const CURRENCY = String.fromCharCode(0x20b1);
 
