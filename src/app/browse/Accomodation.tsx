@@ -2,10 +2,14 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import AppImage from '../components/ui/AppImage';
 import { getApprovedListings } from '@/lib/services/listings';
 import type { PropertyListing } from '@/types/listing';
 import type { SearchParams } from './page';
+
+// Dynamically import BrowseMap to avoid SSR issues with Leaflet
+const BrowseMap = dynamic(() => import('./BrowseMap'), { ssr: false });
 
 interface AccommodationCardProps {
   id: string;
@@ -23,6 +27,8 @@ interface AccommodationCardProps {
   bedrooms?: number;
   bathrooms?: number;
   availability?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 const AccommodationCard = ({ id, name, location, price, rating, image, verified }: AccommodationCardProps) => {
@@ -80,6 +86,7 @@ export default function Accommodation({ searchParams }: AccommodationProps) {
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [minRating, setMinRating] = useState(0);
   const [bookingOptions, setBookingOptions] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   
   // Fetch listings from Firestore
   const [accommodations, setAccommodations] = useState<AccommodationCardProps[]>([]);
@@ -99,6 +106,8 @@ export default function Accommodation({ searchParams }: AccommodationProps) {
           location: `${listing.barangay}, ${listing.city}`,
           price: parseInt(listing.rate.replace(/[^0-9]/g, "")) || 0,
           rating: listing.averageRating || 4.5,
+          latitude: listing.latitude,
+          longitude: listing.longitude,
           image: listing.coverPhoto || listing.photos?.[0] || '/placeholder-image.jpg',
           verified: listing.status === "approved",
           guests: listing.guests || 1,
@@ -313,10 +322,24 @@ export default function Accommodation({ searchParams }: AccommodationProps) {
                 <p className="text-[#9E9E9E] font-lexend text-[24px]">Stays in Baguio City with trusted local hosts</p>
               </div>
               <div className="flex gap-2">
-                <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-lexend">
+                <button 
+                  onClick={() => setViewMode('list')}
+                  className={`px-4 py-2 border rounded-lg font-lexend transition-colors ${
+                    viewMode === 'list' 
+                      ? 'bg-[#1078CF] text-white border-[#1078CF]' 
+                      : 'border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
                   📋 List
                 </button>
-                <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-lexend">
+                <button 
+                  onClick={() => setViewMode('map')}
+                  className={`px-4 py-2 border rounded-lg font-lexend transition-colors ${
+                    viewMode === 'map' 
+                      ? 'bg-[#1078CF] text-white border-[#1078CF]' 
+                      : 'border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
                   🗺️ Map
                 </button>
               </div>
@@ -381,13 +404,19 @@ export default function Accommodation({ searchParams }: AccommodationProps) {
               </div>
             )}
 
-            {/* Accommodations Grid */}
+            {/* Accommodations Grid or Map View */}
             {!loading && !error && filteredAccommodations.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {filteredAccommodations.map((accommodation) => (
-                  <AccommodationCard key={accommodation.id} {...accommodation} />
-                ))}
-              </div>
+              viewMode === 'list' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {filteredAccommodations.map((accommodation) => (
+                    <AccommodationCard key={accommodation.id} {...accommodation} />
+                  ))}
+                </div>
+              ) : (
+                <div className="w-full">
+                  <BrowseMap accommodations={filteredAccommodations} />
+                </div>
+              )
             )}
           </div>
 
