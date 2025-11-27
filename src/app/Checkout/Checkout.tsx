@@ -102,7 +102,6 @@ export default function Checkout() {
 	useEffect(() => {
 		async function fetchListing() {
 			if (!urlListingId) {
-				setLoadingListing(false);
 				return;
 			}
 			try {
@@ -115,8 +114,6 @@ export default function Checkout() {
 				}
 			} catch (error) {
 				console.error("Failed to fetch listing:", error);
-			} finally {
-				setLoadingListing(false);
 			}
 		}
 		fetchListing();
