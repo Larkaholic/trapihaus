@@ -64,21 +64,21 @@ export default function Categories() {
             <CategoryCard
             title="Apartments"
             description="A comfortable space built for longer stays."
-            image="https://github.com/Inv8Solutions/trapihaus/blob/master/public/apartments.jpg?raw=true"
+            image="/apartments.jpg"
             onClick={() => handleCategoryClick("apartment")}
           />
             
             <CategoryCard
             title="Transients"
             description="Affordable short stays, perfect for quick trips."
-            image="https://github.com/Inv8Solutions/trapihaus/blob/master/public/transients.jpg?raw=true"
+            image="/transients.jpg"
             onClick={() => handleCategoryClick("transient")}
             />
           {/* Bottom Row - Hotels spanning full width */}
           <CategoryCard
             title="Hotels"
             description="Full service comfort with modern convenience."
-            image="https://github.com/Inv8Solutions/trapihaus/blob/master/public/hotels.jpg?raw=true"
+            image="/hotels.jpg"
             className="md:col-span-2"
             onClick={() => handleCategoryClick("hotel")}
           />

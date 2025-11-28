@@ -45,7 +45,7 @@ export default function Lastt() {
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
-          src="https://github.com/Inv8Solutions/trapihaus/blob/master/public/lastbg.jpg?raw=true"
+          src="/lastbg.jpg"
           alt="Baguio mountains landscape"
           fill
           className="object-cover"
