@@ -193,13 +193,13 @@ export async function getUserReservations(
 export async function getUpcomingReservations(userId: string): Promise<Reservation[]> {
 	const db = getFirestoreClient();
 	const reservationsRef = collection(db, RESERVATIONS_COLLECTION);
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
 	
-	// Get all non-cancelled reservations
+	// Get all non-cancelled and non-declined reservations
 	const upcomingQuery = query(
 		reservationsRef,
 		where("userId", "==", userId),
-		where("status", "!=", "cancelled"),
-		orderBy("status"),
 		orderBy("checkInDate", "asc")
 	);
 
@@ -211,16 +211,18 @@ export async function getUpcomingReservations(userId: string): Promise<Reservati
 		const checkInDate = data.checkInDate instanceof Timestamp ? data.checkInDate.toDate() : new Date(data.checkInDate);
 		const checkOutDate = data.checkOutDate instanceof Timestamp ? data.checkOutDate.toDate() : new Date(data.checkOutDate);
 		
-		// Status is now manually managed by hosts, no auto-updates
-		reservations.push({
-			id: docSnap.id,
-			...data,
-			checkInDate,
-			checkOutDate,
-			createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(),
-			updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : new Date(),
-			cancelledAt: data.cancelledAt instanceof Timestamp ? data.cancelledAt.toDate() : undefined,
-		} as Reservation);
+		// Filter: only include if check-out date hasn't passed and not cancelled/declined/completed
+		if (checkOutDate >= today && data.status !== "cancelled" && data.status !== "declined" && data.status !== "completed") {
+			reservations.push({
+				id: docSnap.id,
+				...data,
+				checkInDate,
+				checkOutDate,
+				createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(),
+				updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : new Date(),
+				cancelledAt: data.cancelledAt instanceof Timestamp ? data.cancelledAt.toDate() : undefined,
+			} as Reservation);
+		}
 	});
 
 	return reservations;
@@ -234,13 +236,13 @@ export async function getUpcomingReservations(userId: string): Promise<Reservati
 export async function getPastReservations(userId: string): Promise<Reservation[]> {
 	const db = getFirestoreClient();
 	const reservationsRef = collection(db, RESERVATIONS_COLLECTION);
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
 	
-	// Get all non-cancelled reservations
+	// Get all reservations
 	const allQuery = query(
 		reservationsRef,
 		where("userId", "==", userId),
-		where("status", "!=", "cancelled"),
-		orderBy("status"),
 		orderBy("checkInDate", "desc")
 	);
 
@@ -252,16 +254,18 @@ export async function getPastReservations(userId: string): Promise<Reservation[]
 		const checkInDate = data.checkInDate instanceof Timestamp ? data.checkInDate.toDate() : new Date(data.checkInDate);
 		const checkOutDate = data.checkOutDate instanceof Timestamp ? data.checkOutDate.toDate() : new Date(data.checkOutDate);
 		
-		// Status is now manually managed by hosts, no auto-updates
-		completedReservations.push({
-			id: docSnap.id,
-			...data,
-			checkInDate,
-			checkOutDate,
-			createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(),
-			updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : new Date(),
-			cancelledAt: data.cancelledAt instanceof Timestamp ? data.cancelledAt.toDate() : undefined,
-		} as Reservation);
+		// Filter: only include if check-out date has passed and not cancelled/declined
+		if (checkOutDate < today && data.status !== "cancelled" && data.status !== "declined") {
+			completedReservations.push({
+				id: docSnap.id,
+				...data,
+				checkInDate,
+				checkOutDate,
+				createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(),
+				updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : new Date(),
+				cancelledAt: data.cancelledAt instanceof Timestamp ? data.cancelledAt.toDate() : undefined,
+			} as Reservation);
+		}
 	});
 
 	return completedReservations;
