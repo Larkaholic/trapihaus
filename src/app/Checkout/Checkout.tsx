@@ -204,11 +204,9 @@ export default function Checkout() {
 			if (request) reservationData.specialRequest = request;
 
 			const newReservationId = await createReservation(reservationData);
-			console.log("✅ Reservation created:", newReservationId);
 			
 			// Mark accommodation as unavailable (single accommodation booking)
 			await markListingUnavailable(urlListingId);
-			console.log("✅ Listing marked as unavailable:", urlListingId);
 			
 			// Generate display reference
 			const d = new Date();
@@ -218,7 +216,6 @@ export default function Checkout() {
 			
 			setConfirmed(true);
 		} catch (error) {
-			console.error("❌ Error creating reservation:", error);
 			alert("Failed to create reservation. Please try again.");
 		} finally {
 			setProcessing(false);
@@ -250,7 +247,6 @@ export default function Checkout() {
 			// Navigate to messages page with active thread
 			router.push(`/dashboard/messages?threadId=${threadId}`);
 		} catch (error) {
-			console.error("Failed to create thread:", error);
 			alert("Failed to open conversation. Please try again.");
 		}
 	};
