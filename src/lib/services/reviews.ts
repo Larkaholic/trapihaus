@@ -192,3 +192,53 @@ export async function getUserReviewForListing(userId: string, listingId: string)
 		updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : new Date(),
 	} as Review;
 }
+
+/**
+ * Get all reviews for properties owned by a host
+ * @param hostId - Host's Firebase Auth UID
+ * @returns Array of Review with listing info
+ */
+export async function getHostReviews(hostId: string): Promise<Review[]> {
+	const db = getFirestoreClient();
+	
+	// First, get all listings for this host
+	const listingsRef = collection(db, LISTINGS_COLLECTION);
+	const listingsQuery = query(
+		listingsRef,
+		where("userId", "==", hostId)
+	);
+	
+	const listingsSnapshot = await getDocs(listingsQuery);
+	const listingIds = listingsSnapshot.docs.map(doc => doc.id);
+	
+	if (listingIds.length === 0) return [];
+	
+	// Then get all reviews for these listings
+	const reviewsRef = collection(db, REVIEWS_COLLECTION);
+	const allReviews: Review[] = [];
+	
+	// Firestore 'in' queries support up to 10 items, so batch if needed
+	const batchSize = 10;
+	for (let i = 0; i < listingIds.length; i += batchSize) {
+		const batch = listingIds.slice(i, i + batchSize);
+		const reviewsQuery = query(
+			reviewsRef,
+			where("listingId", "in", batch),
+			orderBy("createdAt", "desc")
+		);
+		
+		const reviewsSnapshot = await getDocs(reviewsQuery);
+		reviewsSnapshot.forEach((doc) => {
+			const data = doc.data();
+			allReviews.push({
+				id: doc.id,
+				...data,
+				createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(),
+				updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : new Date(),
+			} as Review);
+		});
+	}
+	
+	// Sort by date descending
+	return allReviews.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+}

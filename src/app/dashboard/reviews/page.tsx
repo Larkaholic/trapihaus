@@ -1,13 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { onAuthStateChanged } from "firebase/auth";
+import { getFirebaseAuth } from "@/lib/auth/firebaseClient";
+import { getHostReviews } from "@/lib/services/reviews";
+import type { Review } from "@/types/review";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import {
   faStar,
   faMagnifyingGlass,
   faEllipsisVertical,
-  faThumbsUp,
+  faReply,
+  faCheckCircle,
+  faCommentDots,
 } from "@fortawesome/free-solid-svg-icons";
 
 function Stat({ icon, label, value, tint, valueColor }: { icon: IconDefinition; label: string; value: string; tint: string; valueColor: string }) {
@@ -32,111 +39,193 @@ function Stars({ value }: { value: number }) {
   return <div className="flex items-center gap-1">{stars}</div>;
 }
 
-type Aspect = "Cleanliness" | "Accuracy" | "Communication" | "Location" | "Check-in" | "Value";
-
-function AspectGrid({ scores }: { scores: Record<Aspect, number> }) {
-  const entries = Object.entries(scores) as [Aspect, number][];
-  return (
-    <div className="grid grid-cols-3 gap-y-4 gap-x-6">
-      {entries.map(([k, v]) => (
-        <div key={k} className="text-[12px]">
-          <div className="text-[#6B7280] font-lexend">{k}</div>
-          <div className="flex items-center gap-1">
-            <Stars value={v} />
-            <span className="text-[#6B7280]">{v}</span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+function formatReviewDate(date: Date): string {
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
-function ReviewCard({
-  name,
-  reviewsCount,
-  date,
-  property,
-  text,
-  scores,
-  helpfulCount,
-  bookingId,
-  withResponse,
-}: {
-  name: string;
-  reviewsCount: number;
-  date: string;
-  property: string;
-  text: string;
-  scores: Record<Aspect, number>;
-  helpfulCount: number;
-  bookingId: string;
-  withResponse?: boolean;
-}) {
+function ReviewCard({ review }: { review: Review }) {
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-sm">
       <div className="flex items-start justify-between">
-        <div>
-          <div className="text-[13px] font-lexend text-[#111827] font-semibold">{name} <span className="ml-1 text-[#6B7280] font-normal">{reviewsCount} reviews</span></div>
-          <div className="flex items-center gap-2 text-[12px] text-[#6B7280] font-lexend">
-            <Stars value={5} />
-            <span>•</span>
-            <span>{date}</span>
+        <div className="flex items-start gap-3">
+          {/* Avatar */}
+          <div className="relative">
+            {review.userAvatar ? (
+              <img
+                src={review.userAvatar}
+                alt={review.userName}
+                className="w-10 h-10 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold text-sm">
+                {getInitials(review.userName)}
+              </div>
+            )}
           </div>
-          <div className="text-[11px] text-[#6B7280] font-lexend">{property}</div>
+
+          <div>
+            <div className="text-[13px] font-lexend text-[#111827] font-semibold">{review.userName}</div>
+            <div className="flex items-center gap-2 text-[12px] text-[#6B7280] font-lexend">
+              <Stars value={review.rating} />
+              <span>•</span>
+              <span>{formatReviewDate(review.createdAt)}</span>
+            </div>
+            <div className="text-[11px] text-[#6B7280] font-lexend">{review.propertyName}</div>
+          </div>
         </div>
-        <button className="h-8 w-8 rounded-full text-[#6B7280] hover:bg-[#F3F4F6]"><FontAwesomeIcon icon={faEllipsisVertical} /></button>
+        <button className="h-8 w-8 rounded-full text-[#6B7280] hover:bg-[#F3F4F6]">
+          <FontAwesomeIcon icon={faEllipsisVertical} />
+        </button>
       </div>
 
-      <p className="mt-3 text-[13px] text-[#111827]">
-        {text}
+      <p className="mt-3 text-[13px] text-[#111827] leading-relaxed">
+        {review.comment}
       </p>
 
       <div className="mt-4">
-        <AspectGrid scores={scores} />
+        <button className="inline-flex items-center gap-2 h-9 px-4 rounded-xl border border-[#CCE0FF] text-[#1078CF] bg-[#F5FAFF] text-[13px] font-lexend hover:bg-[#E5F0FF] transition-colors">
+          <FontAwesomeIcon icon={faReply} />
+          Respond to Review
+        </button>
       </div>
 
-      {!withResponse ? (
-        <div className="mt-4">
-          <div className="relative">
-            <div className="h-8 rounded-md border border-[#E5E7EB]" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <button className="h-8 px-4 rounded-md border border-[#CCE0FF] text-[#1078CF] bg-[#F5FAFF] text-[12px] font-lexend">Respond to Review</button>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="mt-4 rounded-md border border-[#BFDBFE] bg-[#F5FAFF] p-3 text-[12px] text-[#111827]">
-          <div className="text-[#1078CF] font-lexend">Your Response • Oct 13, 2024</div>
-          <div className="mt-1">Thank you for your feedback, John! We’re glad you enjoyed your stay. We’re working on upgrading our WiFi speed. Hope to host you again!</div>
-        </div>
-      )}
-
       <div className="mt-3 flex items-center justify-between text-[11px] text-[#6B7280] font-lexend">
-        <div className="flex items-center gap-1"><FontAwesomeIcon icon={faThumbsUp} /> {helpfulCount} found this helpful</div>
-        <div>Booking ID: {bookingId}</div>
+        <div className="text-[#1078CF] cursor-pointer hover:underline">{review.propertyLocation}</div>
+        <div>Reservation: {review.reservationId.substring(0, 12)}</div>
       </div>
     </div>
   );
 }
 
 export default function ReviewsPage() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [ratingFilter, setRatingFilter] = useState("All Ratings");
+  const [hostId, setHostId] = useState<string | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  // Auth state listener
+  useEffect(() => {
+    const auth = getFirebaseAuth();
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setHostId(currentUser.uid);
+      } else {
+        setHostId(null);
+        router.push("/login");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  // Fetch host reviews
+  useEffect(() => {
+    if (!hostId) return;
+
+    const fetchReviews = async () => {
+      try {
+        setLoading(true);
+        const allReviews = await getHostReviews(hostId);
+        setReviews(allReviews);
+      } catch (error) {
+        console.error("❌ Error fetching reviews:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, [hostId]);
+
+  // Calculate average rating
+  const averageRating = useMemo(() => {
+    if (reviews.length === 0) return "0.0";
+    const total = reviews.reduce((sum, r) => sum + r.rating, 0);
+    return (total / reviews.length).toFixed(1);
+  }, [reviews]);
+
+  // Total reviews count
+  const totalReviews = reviews.length;
+
+  // Response rate (placeholder - would need to track responses)
+  const responseRate = useMemo(() => {
+    // For now, return 0% - would need a 'hasResponse' field on reviews
+    return "0";
+  }, []);
+
+  // Awaiting response count (all reviews for now)
+  const awaitingResponse = totalReviews;
+
+  // Filter reviews
+  const filteredReviews = useMemo(() => {
+    return reviews.filter((review) => {
+      // Search filter
+      const matchesSearch =
+        debouncedQuery === "" ||
+        review.userName.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+        review.propertyName.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+        review.comment.toLowerCase().includes(debouncedQuery.toLowerCase());
+
+      // Rating filter
+      const matchesRating =
+        ratingFilter === "All Ratings" ||
+        (ratingFilter === "5 Stars" && review.rating === 5) ||
+        (ratingFilter === "4 Stars" && review.rating === 4) ||
+        (ratingFilter === "3 Stars" && review.rating === 3) ||
+        (ratingFilter === "2 Stars" && review.rating === 2) ||
+        (ratingFilter === "1 Star" && review.rating === 1);
+
+      return matchesSearch && matchesRating;
+    });
+  }, [reviews, debouncedQuery, ratingFilter]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="pt-4">
         <h1 className="text-[22px] md:text-[24px] font-lexend font-semibold text-[#111827]">Reviews</h1>
-        <p className="text-[#6B7280] text-sm mt-1 font-lexend">Track your revenue and manage payouts</p>
+        <p className="text-[#6B7280] text-sm mt-1 font-lexend">Monitor guest feedback and respond to reviews</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Stat icon={faStar} label="Average Rating" value="4.8" tint="bg-[#FFFBEB] text-[#F59E0B]" valueColor="text-[#F59E0B]" />
-        <Stat icon={faMagnifyingGlass} label="Total Reviews" value="₱4,600" tint="bg-[#EFF6FF] text-[#1D4ED8]" valueColor="text-[#1D4ED8]" />
-        <Stat icon={faMagnifyingGlass} label="Response Rate" value="₱3,200" tint="bg-[#FFF7ED] text-[#A16207]" valueColor="text-[#A16207]" />
-        <Stat icon={faMagnifyingGlass} label="Awaiting Response" value="82%" tint="bg-[#F5F3FF] text-[#6D28D9]" valueColor="text-[#6D28D9]" />
+        <Stat icon={faStar} label="Average Rating" value={averageRating} tint="bg-[#FFFBEB] text-[#F59E0B]" valueColor="text-[#F59E0B]" />
+        <Stat icon={faCommentDots} label="Total Reviews" value={totalReviews.toString()} tint="bg-[#EFF6FF] text-[#1D4ED8]" valueColor="text-[#1D4ED8]" />
+        <Stat icon={faCheckCircle} label="Response Rate" value={`${responseRate}%`} tint="bg-[#FFF7ED] text-[#A16207]" valueColor="text-[#A16207]" />
+        <Stat icon={faReply} label="Awaiting Response" value={awaitingResponse.toString()} tint="bg-[#F5F3FF] text-[#6D28D9]" valueColor="text-[#6D28D9]" />
       </div>
 
       {/* Filters */}
@@ -165,30 +254,25 @@ export default function ReviewsPage() {
       </div>
 
       {/* Review list */}
-      <div className="space-y-4">
-        <ReviewCard
-          name="Maria Dela Cruz"
-          reviewsCount={12}
-          date="Oct 14, 2024"
-          property="Loakan Heights Residences"
-          text="Amazing place! The view was spectacular and the amenities were top-notch. Host was very responsive and helpful. Would definitely recommend to anyone visiting Baguio!"
-          scores={{ Cleanliness: 5, Accuracy: 5, Communication: 5, Location: 5, "Check-in": 5, Value: 5 }}
-          helpfulCount={8}
-          bookingId="RES-2024-001"
-        />
-
-        <ReviewCard
-          name="John Rodriguez"
-          reviewsCount={8}
-          date="Oct 12, 2024"
-          property="Pinecrest Transient"
-          text="Good value for money. The room was clean and comfortable. WiFi could be faster, but overall a pleasant stay."
-          scores={{ Cleanliness: 5, Accuracy: 4, Communication: 4, Location: 4, "Check-in": 4, Value: 5 }}
-          helpfulCount={3}
-          bookingId="RES-2024-002"
-          withResponse
-        />
-      </div>
+      {filteredReviews.length === 0 ? (
+        <div className="text-center py-20">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+            <FontAwesomeIcon icon={faCommentDots} className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">No Reviews Yet</h3>
+          <p className="text-gray-600 max-w-md mx-auto">
+            {debouncedQuery || ratingFilter !== "All Ratings"
+              ? "No reviews match your filters. Try adjusting your search."
+              : "You haven't received any reviews yet. Reviews will appear here after guests complete their stays."}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredReviews.map((review) => (
+            <ReviewCard key={review.id} review={review} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

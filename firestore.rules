@@ -103,6 +103,53 @@ service cloud.firestore {
       allow delete: if isOwner(resource.data.userId);
     }
     
+    // Message threads collection
+    match /messageThreads/{threadId} {
+      // Users can read threads where they are either the host or the guest
+      allow read: if isSignedIn() 
+                  && (request.auth.uid == resource.data.hostId 
+                      || request.auth.uid == resource.data.guestId);
+      
+      // Only authenticated users can create threads for their reservations
+      allow create: if isSignedIn()
+                    && request.resource.data.reservationId is string
+                    && (request.resource.data.hostId == request.auth.uid 
+                        || request.resource.data.guestId == request.auth.uid)
+                    && request.resource.data.propertyName is string
+                    && request.resource.data.createdAt is timestamp;
+      
+      // Thread participants (host or guest) can update thread (for lastMessage updates)
+      allow update: if isSignedIn()
+                    && (request.auth.uid == resource.data.hostId 
+                        || request.auth.uid == resource.data.guestId);
+      
+      // Thread participants can delete the thread
+      allow delete: if isSignedIn()
+                    && (request.auth.uid == resource.data.hostId 
+                        || request.auth.uid == resource.data.guestId);
+    }
+    
+    // Messages collection
+    match /messages/{messageId} {
+      // Users can read messages from threads where they are a participant
+      // We need to check the threadId against messageThreads collection
+      allow read: if isSignedIn();
+      
+      // Only authenticated users can create messages in threads they participate in
+      allow create: if isSignedIn()
+                    && request.resource.data.senderId == request.auth.uid
+                    && request.resource.data.threadId is string
+                    && request.resource.data.senderName is string
+                    && request.resource.data.text is string
+                    && request.resource.data.createdAt is timestamp;
+      
+      // Message sender can update their message (for editing)
+      allow update: if isOwner(resource.data.senderId);
+      
+      // Message sender can delete their message
+      allow delete: if isOwner(resource.data.senderId);
+    }
+    
     // Deny all other access by default
     match /{document=**} {
       allow read, write: if false;

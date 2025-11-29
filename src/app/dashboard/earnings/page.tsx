@@ -1,6 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { onAuthStateChanged } from "firebase/auth";
+import { getFirebaseAuth } from "@/lib/auth/firebaseClient";
+import { getHostReservations } from "@/lib/services/reservations";
+import type { Reservation } from "@/types/reservation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import {
@@ -62,16 +67,108 @@ function LineChart({ points }: { points: number[] }) {
 }
 
 export default function EarningsPage() {
+  const router = useRouter();
   const [tab, setTab] = useState<TabKey>("overview");
   const [period] = useState("This Year");
+  const [hostId, setHostId] = useState<string | null>(null);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"];
   const points = [9000, 9500, 12000, 9800, 14000, 15000, 18000, 18500];
 
-  const total = useMemo(() => 153000, []);
-  const todays = useMemo(() => 4600, []);
-  const avgDaily = useMemo(() => 3200, []);
-  const occupancy = useMemo(() => 0.82, []);
+  // Auth state listener
+  useEffect(() => {
+    const auth = getFirebaseAuth();
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setHostId(currentUser.uid);
+      } else {
+        setHostId(null);
+        router.push("/login");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  // Fetch host reservations
+  useEffect(() => {
+    if (!hostId) return;
+
+    const fetchReservations = async () => {
+      try {
+        setLoading(true);
+        const allReservations = await getHostReservations(hostId);
+        // Filter only confirmed and completed reservations for earnings
+        const paidReservations = allReservations.filter(
+          (r) => r.status === "confirmed" || r.status === "checked-in" || r.status === "completed"
+        );
+        setReservations(paidReservations);
+      } catch (error) {
+        console.error("❌ Error fetching reservations:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReservations();
+  }, [hostId]);
+
+  // Calculate total earnings
+  const total = useMemo(() => {
+    return reservations.reduce((sum, r) => sum + r.total, 0);
+  }, [reservations]);
+
+  // Calculate today's earnings
+  const todays = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return reservations
+      .filter((r) => {
+        const createdAt = r.createdAt;
+        return createdAt >= today && createdAt < tomorrow;
+      })
+      .reduce((sum, r) => sum + r.total, 0);
+  }, [reservations]);
+
+  // Calculate average daily earnings
+  const avgDaily = useMemo(() => {
+    if (reservations.length === 0) return 0;
+    
+    // Get date range from oldest to newest reservation
+    const dates = reservations.map((r) => r.createdAt.getTime());
+    const oldestDate = new Date(Math.min(...dates));
+    const newestDate = new Date(Math.max(...dates));
+    
+    const daysDiff = Math.max(1, Math.ceil((newestDate.getTime() - oldestDate.getTime()) / 86400000));
+    
+    return Math.round(total / daysDiff);
+  }, [reservations, total]);
+
+  // Calculate occupancy rate
+  const occupancy = useMemo(() => {
+    if (reservations.length === 0) return 0;
+    
+    // Count total nights booked
+    const totalNightsBooked = reservations.reduce((sum, r) => sum + r.nights, 0);
+    
+    // Estimate total available nights (assuming 365 days for the year)
+    const totalAvailableNights = 365;
+    
+    return Math.min(1, totalNightsBooked / totalAvailableNights);
+  }, [reservations]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
