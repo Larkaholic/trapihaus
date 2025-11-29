@@ -34,38 +34,40 @@ export default function Sidebar() {
   return (
     <aside className="hidden md:flex w-64 shrink-0 flex-col bg-white border-r border-[#E5E7EB] min-h-screen p-4">
       <div className="mb-6">
+      <Link href="/">
         <Image
-          src="/mainLogo.png"
-          alt="Trapihaus main logo"
-          width={160}
-          height={50}
-          className="h-[40px] w-auto"
-          priority
+        src="/mainLogo.png"
+        alt="Trapihaus main logo"
+        width={160}
+        height={50}
+        className="h-[40px] w-auto cursor-pointer"
+        priority
         />
+      </Link>
       </div>
       <nav className="flex-1 space-y-[4px]">
-        {nav.map((item) => {
-          const active = pathname === item.href || (item.href !== "/dashboard" && pathname?.startsWith(item.href));
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-4 px-3 py-2 rounded-xl font-lexend text-sm transition-colors ${
-                active ? "bg-[#1078CF] text-white" : "text-[#374151] hover:bg-[#F3F4F6]"
-              }`}
-            >
-              <FontAwesomeIcon icon={item.icon} className="text-lg" aria-hidden />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
+      {nav.map((item) => {
+        const active = pathname === item.href || (item.href !== "/dashboard" && pathname?.startsWith(item.href));
+        return (
+        <Link
+          key={item.href}
+          href={item.href}
+          className={`flex items-center gap-4 px-3 py-2 rounded-xl font-lexend text-sm transition-colors ${
+          active ? "bg-[#1078CF] text-white" : "text-[#374151] hover:bg-[#F3F4F6]"
+          }`}
+        >
+          <FontAwesomeIcon icon={item.icon} className="text-lg" aria-hidden />
+          <span>{item.label}</span>
+        </Link>
+        );
+      })}
       </nav>
       <Link 
-        href="/ListProperty"
-        className="mt-4 inline-flex items-center justify-center h-11 rounded-xl bg-[#F68109] text-white font-lexend text-sm font-semibold shadow px-4 gap-2 hover:bg-[#e67508] transition-colors"
+      href="/ListProperty"
+      className="mt-4 inline-flex items-center justify-center h-11 rounded-xl bg-[#F68109] text-white font-lexend text-sm font-semibold shadow px-4 gap-2 hover:bg-[#e67508] transition-colors"
       >
-        <FontAwesomeIcon icon={faPlus} aria-hidden />
-        <span>Add New Property</span>
+      <FontAwesomeIcon icon={faPlus} aria-hidden />
+      <span>Add New Property</span>
       </Link>
     </aside>
   );
