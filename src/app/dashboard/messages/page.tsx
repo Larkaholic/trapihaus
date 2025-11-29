@@ -94,7 +94,7 @@ export default function MessagesPage() {
         threadId: activeId,
         senderId: user.uid,
         senderName: user.displayName || "User",
-        senderAvatar: user.photoURL || undefined,
+        senderAvatar: user.photoURL || "",
         text: input.trim(),
       });
 
