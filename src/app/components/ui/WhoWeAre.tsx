@@ -38,6 +38,8 @@ export default function WhoWeAre({
             ))}
             
             {/* Contact Information */}
+            {/* Contact Information */}
+            {/* Contact Information */}
             <div className="flex flex-col sm:flex-row gap-6 mt-8">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-[#83C12C] rounded-full flex items-center justify-center">
