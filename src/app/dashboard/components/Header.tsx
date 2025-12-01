@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { getFirebaseAuth } from "@/lib/auth/firebaseClient";
 import { onAuthStateChanged, signOut as firebaseSignOut } from "firebase/auth";
 import { getUserProfile } from "@/lib/services/userProfile";
+import { getHostReservations } from "@/lib/services/reservations";
+import { getUserThreads } from "@/lib/services/messages";
+import { getHostReviews } from "@/lib/services/reviews";
 import Image from "next/image";
 
 interface Notification {
@@ -14,51 +17,44 @@ interface Notification {
   message: string;
   time: string;
   isRead: boolean;
+  link?: string;
 }
 
 export default function Header() {
   const router = useRouter();
   const [userName, setUserName] = useState("");
   const [userAvatar, setUserAvatar] = useState("/woman.png");
+  const [userId, setUserId] = useState<string | null>(null);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: "1",
-      type: "booking",
-      title: "New Booking Request",
-      message: "Maria Dela Cruz requested to book Loakan Heights for Oct 20-23",
-      time: "2 min ago",
-      isRead: false,
-    },
-    {
-      id: "2",
-      type: "message",
-      title: "New Message",
-      message: 'John Rodriguez: "Is WiFi available at the property?"',
-      time: "15 min ago",
-      isRead: false,
-    },
-    {
-      id: "3",
-      type: "review",
-      title: "New Review",
-      message: "Sarah Lim left a 5-star review for Burnham View Hotel",
-      time: "1 hour ago",
-      isRead: false,
-    },
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const notificationRef = useRef<HTMLDivElement | null>(null);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
+  // Helper function to format time ago
+  const formatTimeAgo = (date: Date): string => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  };
+
   // Load user data
   useEffect(() => {
     const auth = getFirebaseAuth();
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        setUserId(user.uid);
         try {
           const profile = await getUserProfile(user.uid);
           if (profile) {
@@ -78,6 +74,95 @@ export default function Header() {
     
     return () => unsubscribe();
   }, []);
+
+  // Load notifications
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadNotifications = async () => {
+      try {
+        const newNotifications: Notification[] = [];
+
+        // Fetch pending reservations (booking requests)
+        const reservations = await getHostReservations(userId, "pending");
+        const recentReservations = reservations.slice(0, 5); // Last 5 pending
+        
+        recentReservations.forEach((reservation) => {
+          newNotifications.push({
+            id: `booking-${reservation.id}`,
+            type: "booking",
+            title: "New Booking Request",
+            message: `${reservation.guestFirstName} ${reservation.guestLastName} requested to book ${reservation.propertyName}`,
+            time: formatTimeAgo(reservation.createdAt),
+            isRead: false,
+            link: `/dashboard/reservations`,
+          });
+        });
+
+        // Fetch recent messages
+        const threads = await getUserThreads(userId);
+        const recentThreads = threads.slice(0, 5); // Last 5 threads
+        
+        recentThreads.forEach((thread) => {
+          // Only show if last message was not from the current user
+          if (thread.lastMessageSenderId && thread.lastMessageSenderId !== userId && thread.lastMessage) {
+            const senderName = thread.lastMessageSenderId === thread.guestId ? thread.guestName : thread.hostName;
+            newNotifications.push({
+              id: `message-${thread.id}`,
+              type: "message",
+              title: "New Message",
+              message: `${senderName}: "${thread.lastMessage.substring(0, 50)}${thread.lastMessage.length > 50 ? "..." : ""}"`,
+              time: formatTimeAgo(thread.lastMessageAt),
+              isRead: false,
+              link: `/dashboard/messages?threadId=${thread.id}`,
+            });
+          }
+        });
+
+        // Fetch recent reviews
+        const reviews = await getHostReviews(userId);
+        const recentReviews = reviews.slice(0, 5); // Last 5 reviews
+        
+        recentReviews.forEach((review) => {
+          newNotifications.push({
+            id: `review-${review.id}`,
+            type: "review",
+            title: "New Review",
+            message: `${review.userName} left a ${review.rating}-star review for ${review.propertyName}`,
+            time: formatTimeAgo(review.createdAt),
+            isRead: false,
+            link: `/dashboard/reviews`,
+          });
+        });
+
+        // Sort by time (most recent first)
+        newNotifications.sort((a, b) => {
+          // Extract numeric value from time string for rough sorting
+          const getTimeValue = (timeStr: string) => {
+            if (timeStr === "Just now") return 0;
+            const match = timeStr.match(/(\d+)/);
+            if (!match) return 999999;
+            const value = parseInt(match[1]);
+            if (timeStr.includes("min")) return value;
+            if (timeStr.includes("hour")) return value * 60;
+            if (timeStr.includes("day")) return value * 1440;
+            return value * 10080; // weeks
+          };
+          return getTimeValue(a.time) - getTimeValue(b.time);
+        });
+
+        setNotifications(newNotifications);
+      } catch (error) {
+        console.error("Failed to load notifications:", error);
+      }
+    };
+
+    loadNotifications();
+    
+    // Refresh notifications every 30 seconds
+    const interval = setInterval(loadNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [userId]);
 
   const handleLogout = async () => {
     try {
@@ -180,6 +265,12 @@ export default function Header() {
                     notifications.map((notification) => (
                       <div
                         key={notification.id}
+                        onClick={() => {
+                          if (notification.link) {
+                            router.push(notification.link);
+                            setIsNotificationsOpen(false);
+                          }
+                        }}
                         className={`px-5 py-4 border-b border-[#F3F4F6] hover:bg-[#F9FAFB] transition-colors cursor-pointer relative ${
                           !notification.isRead ? "bg-[#F0F9FF]" : ""
                         }`}
