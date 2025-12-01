@@ -20,6 +20,11 @@ interface Notification {
   link?: string;
 }
 
+interface NotificationState {
+  readIds: string[];
+  deletedIds: string[];
+}
+
 export default function Header() {
   const router = useRouter();
   const [userName, setUserName] = useState("");
@@ -28,11 +33,34 @@ export default function Header() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notificationState, setNotificationState] = useState<NotificationState>({ readIds: [], deletedIds: [] });
 
   const notificationRef = useRef<HTMLDivElement | null>(null);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  // Load notification state from localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("notificationState");
+      if (saved) {
+        try {
+          setNotificationState(JSON.parse(saved));
+        } catch (error) {
+          console.error("Failed to parse notification state:", error);
+        }
+      }
+    }
+  }, []);
+
+  // Save notification state to localStorage
+  const saveNotificationState = (state: NotificationState) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("notificationState", JSON.stringify(state));
+      setNotificationState(state);
+    }
+  };
 
   // Helper function to format time ago
   const formatTimeAgo = (date: Date): string => {
@@ -151,7 +179,15 @@ export default function Header() {
           return getTimeValue(a.time) - getTimeValue(b.time);
         });
 
-        setNotifications(newNotifications);
+        // Filter out deleted notifications and apply read status
+        const filteredNotifications = newNotifications
+          .filter((n) => !notificationState.deletedIds.includes(n.id))
+          .map((n) => ({
+            ...n,
+            isRead: notificationState.readIds.includes(n.id),
+          }));
+
+        setNotifications(filteredNotifications);
       } catch (error) {
         console.error("Failed to load notifications:", error);
       }
@@ -162,7 +198,7 @@ export default function Header() {
     // Refresh notifications every 30 seconds
     const interval = setInterval(loadNotifications, 30000);
     return () => clearInterval(interval);
-  }, [userId]);
+  }, [userId, notificationState.readIds, notificationState.deletedIds]);
 
   const handleLogout = async () => {
     try {
@@ -175,11 +211,27 @@ export default function Header() {
   };
 
   const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    const allIds = notifications.map((n) => n.id);
+    const newReadIds = Array.from(new Set([...notificationState.readIds, ...allIds]));
+    saveNotificationState({ ...notificationState, readIds: newReadIds });
+  };
+
+  const markAsRead = (id: string) => {
+    if (!notificationState.readIds.includes(id)) {
+      const newReadIds = [...notificationState.readIds, id];
+      saveNotificationState({ ...notificationState, readIds: newReadIds });
+    }
   };
 
   const clearRead = () => {
-    setNotifications((prev) => prev.filter((n) => !n.isRead));
+    const readIds = notifications.filter((n) => n.isRead).map((n) => n.id);
+    const newDeletedIds = Array.from(new Set([...notificationState.deletedIds, ...readIds]));
+    saveNotificationState({ ...notificationState, deletedIds: newDeletedIds });
+  };
+
+  const deleteNotification = (id: string) => {
+    const newDeletedIds = [...notificationState.deletedIds, id];
+    saveNotificationState({ ...notificationState, deletedIds: newDeletedIds });
   };
 
   // Close on outside click
@@ -265,26 +317,44 @@ export default function Header() {
                     notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        onClick={() => {
-                          if (notification.link) {
-                            router.push(notification.link);
-                            setIsNotificationsOpen(false);
-                          }
-                        }}
-                        className={`px-5 py-4 border-b border-[#F3F4F6] hover:bg-[#F9FAFB] transition-colors cursor-pointer relative ${
+                        className={`px-5 py-4 border-b border-[#F3F4F6] hover:bg-[#F9FAFB] transition-colors relative group ${
                           !notification.isRead ? "bg-[#F0F9FF]" : ""
                         }`}
                       >
-                        {!notification.isRead && (
-                          <div className="absolute right-4 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#1078CF]" />
-                        )}
-                        <h4 className="font-lexend font-semibold text-[15px] text-[#1F2937] mb-1">
-                          {notification.title}
-                        </h4>
-                        <p className="text-sm text-[#6B7280] font-lexend mb-2 pr-4">
-                          {notification.message}
-                        </p>
-                        <p className="text-xs text-[#9CA3AF] font-lexend">{notification.time}</p>
+                        <div 
+                          onClick={() => {
+                            markAsRead(notification.id);
+                            if (notification.link) {
+                              router.push(notification.link);
+                              setIsNotificationsOpen(false);
+                            }
+                          }}
+                          className="cursor-pointer"
+                        >
+                          {!notification.isRead && (
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#1078CF]" />
+                          )}
+                          <h4 className="font-lexend font-semibold text-[15px] text-[#1F2937] mb-1 pr-8">
+                            {notification.title}
+                          </h4>
+                          <p className="text-sm text-[#6B7280] font-lexend mb-2 pr-8">
+                            {notification.message}
+                          </p>
+                          <p className="text-xs text-[#9CA3AF] font-lexend">{notification.time}</p>
+                        </div>
+                        {/* Delete button - shows on hover */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteNotification(notification.id);
+                          }}
+                          className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-100 rounded-lg"
+                          aria-label="Delete notification"
+                        >
+                          <svg className="w-4 h-4 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                            <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
                       </div>
                     ))
                   )}
