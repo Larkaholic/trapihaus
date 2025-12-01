@@ -6,8 +6,10 @@ import dynamic from "next/dynamic";
 import AppImage from "../components/ui/AppImage";
 import { getListing } from "@/lib/services/listings";
 import { getListingReviews } from "@/lib/services/reviews";
+import { getUserProfile } from "@/lib/services/userProfile";
 import type { PropertyListing } from "@/types/listing";
 import type { Review } from "@/types/review";
+import type { UserProfile } from "@/types/user";
 
 // Dynamically import PropertyMap to avoid SSR issues with Leaflet
 const PropertyMap = dynamic(() => import("./PropertyMap"), { ssr: false });
@@ -26,6 +28,7 @@ export default function Listing() {
 	const [reviewsLoading, setReviewsLoading] = useState(false);
 	const [lightboxOpen, setLightboxOpen] = useState(false);
 	const [currentImageIndex, setCurrentImageIndex] = useState(0);
+	const [hostProfile, setHostProfile] = useState<UserProfile | null>(null);
 
 	// Get today's date in YYYY-MM-DD format for min date validation
 	const today = new Date().toISOString().split('T')[0];
@@ -51,6 +54,16 @@ export default function Listing() {
 			try {
 				const data = await getListing(listingId);
 				setListingData(data);
+
+				// Fetch host profile
+				if (data?.userId) {
+					try {
+						const profile = await getUserProfile(data.userId);
+						setHostProfile(profile);
+					} catch (profileError) {
+						console.error("Failed to fetch host profile:", profileError);
+					}
+				}
 
 				// Fetch reviews for this listing
 				if (data?.id) {
@@ -462,7 +475,20 @@ export default function Listing() {
 						</div>
 						<div className="border-t border-gray-100 pt-4">
 							<div className="flex items-center gap-3">
-								<AppImage src="/woman.png" alt={`Photo of host, ${displayHostName}`} width={48} height={48} className="rounded-full object-cover" style={{ width: '48px', height: '48px' }} />
+								{hostProfile?.photoURL ? (
+									<AppImage 
+										src={hostProfile.photoURL} 
+										alt={`Photo of host, ${displayHostName}`} 
+										width={48} 
+										height={48} 
+										className="rounded-full object-cover" 
+										style={{ width: '48px', height: '48px' }} 
+									/>
+								) : (
+									<div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-semibold">
+										{getInitials(displayHostName)}
+									</div>
+								)}
 								<div>
 									<div className="text-sm font-semibold">Hosted by {displayHostName}</div>
 									<div className="text-xs text-gray-500">Verified Host</div>
@@ -629,7 +655,7 @@ export default function Listing() {
 			{/* Lightbox Modal */}
 			{lightboxOpen && (
 				<div 
-					className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+					className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center"
 					onClick={() => setLightboxOpen(false)}
 				>
 					{/* Close button */}

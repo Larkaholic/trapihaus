@@ -215,7 +215,7 @@ export default function Checkout() {
 			setReservationId(newReservationId);
 			
 			setConfirmed(true);
-		} catch (error) {
+		} catch {
 			alert("Failed to create reservation. Please try again.");
 		} finally {
 			setProcessing(false);
@@ -246,7 +246,7 @@ export default function Checkout() {
 			
 			// Navigate to messages page with active thread
 			router.push(`/dashboard/messages?threadId=${threadId}`);
-		} catch (error) {
+		} catch {
 			alert("Failed to open conversation. Please try again.");
 		}
 	};

@@ -8,6 +8,7 @@ import { getHostReviews } from "@/lib/services/reviews";
 import type { Review } from "@/types/review";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+import Image from "next/image";
 import {
   faStar,
   faMagnifyingGlass,
@@ -64,9 +65,11 @@ function ReviewCard({ review }: { review: Review }) {
           {/* Avatar */}
           <div className="relative">
             {review.userAvatar ? (
-              <img
+              <Image
                 src={review.userAvatar}
                 alt={review.userName}
+                width={40}
+                height={40}
                 className="w-10 h-10 rounded-full object-cover"
               />
             ) : (

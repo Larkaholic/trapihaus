@@ -8,6 +8,7 @@ import { getUserThreads, getThreadMessages, sendMessage } from "@/lib/services/m
 import type { MessageThread, Message } from "@/types/message";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch, faPaperclip, faPaperPlane, faPhone, faVideo, faEllipsisVertical, faLocationDot } from "@fortawesome/free-solid-svg-icons";
+import Image from "next/image";
 
 export default function MessagesPage() {
   const router = useRouter();
@@ -231,9 +232,11 @@ export default function MessagesPage() {
                     }`}
                   >
                     {otherPersonAvatar ? (
-                      <img
+                      <Image
                         src={otherPersonAvatar}
                         alt={otherPersonName}
+                        width={40}
+                        height={40}
                         className="h-10 w-10 flex-shrink-0 rounded-full object-cover"
                       />
                     ) : (

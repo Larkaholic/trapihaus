@@ -1,4 +1,5 @@
 type Review = {
+  id: string;
   name: string;
   rating: number; // 1..5
   quote: string;
@@ -30,8 +31,8 @@ export default function LatestReviews({ reviews }: LatestReviewsProps) {
 
       <div className="mt-4 space-y-4">
         {hasData
-          ? reviews!.map((r) => (
-              <div key={`${r.name}-${r.quote.slice(0, 8)}`} className="rounded-xl border border-[#F3F4F6] p-4">
+          ? reviews!.map((r, index) => (
+              <div key={r.id || `review-${index}`} className="rounded-xl border border-[#F3F4F6] p-4">
                 <div className="flex items-center justify-between">
                   <p className="font-medium text-[#111827]">{r.name}</p>
                   <Stars rating={r.rating} />

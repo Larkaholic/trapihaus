@@ -1,4 +1,5 @@
 type Reservation = {
+  id: string;
   guest: string;
   property: string;
   checkIn: string;
@@ -40,8 +41,8 @@ export default function RecentReservations({ items }: RecentReservationsProps) {
                 <td colSpan={5} className="py-6 text-center text-[#9CA3AF]">No reservations yet</td>
               </tr>
             ) : (
-              items.map((r) => (
-                <tr key={`${r.guest}-${r.checkIn}`} className="border-t border-[#F3F4F6]">
+              items.map((r, index) => (
+                <tr key={r.id || `reservation-${index}`} className="border-t border-[#F3F4F6]">
                   <td className="py-3 pr-4 font-medium text-[#111827]">{r.guest}</td>
                   <td className="py-3 pr-4">{r.property}</td>
                   <td className="py-3 pr-4">{r.checkIn}</td>
