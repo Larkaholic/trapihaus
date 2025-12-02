@@ -87,9 +87,11 @@ export async function getDashboardStats(userId: string) {
 }
 
 /**
- * Get revenue data for the last 3 months
+ * Get revenue data for the specified period
+ * @param userId - Host user ID
+ * @param period - Time period: "3months", "6months", or "year"
  */
-export async function getRevenueData(userId: string) {
+export async function getRevenueData(userId: string, period: "3months" | "6months" | "year" = "3months") {
 	const db = getFirestoreClient();
 	const now = new Date();
 	const reservationsRef = collection(db, "reservations");
@@ -97,8 +99,13 @@ export async function getRevenueData(userId: string) {
 	const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 	const revenueData = [];
 
-	// Get last 3 months
-	for (let i = 2; i >= 0; i--) {
+	// Determine how many months to fetch based on period
+	let monthsCount = 3;
+	if (period === "6months") monthsCount = 6;
+	else if (period === "year") monthsCount = 12;
+
+	// Get data for the specified number of months
+	for (let i = monthsCount - 1; i >= 0; i--) {
 		const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
 		const monthLabel = monthNames[monthDate.getMonth()];
 		const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);

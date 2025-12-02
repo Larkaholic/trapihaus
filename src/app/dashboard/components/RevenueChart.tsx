@@ -4,10 +4,11 @@ import { useState } from "react";
 
 interface RevenueChartProps {
   data?: Array<{ label: string; value: number }>;
+  period?: "3months" | "6months" | "year";
+  onPeriodChange?: (period: "3months" | "6months" | "year") => void;
 }
 
-export default function RevenueChart({ data }: RevenueChartProps) {
-  const [period, setPeriod] = useState<"3months" | "6months" | "year">("3months");
+export default function RevenueChart({ data, period = "3months", onPeriodChange }: RevenueChartProps) {
 
   // Get last 3 months dynamically
   const getLastThreeMonths = () => {
@@ -71,7 +72,9 @@ export default function RevenueChart({ data }: RevenueChartProps) {
       <div className="flex items-start justify-between mb-6">
         <div>
           <h3 className="font-lexend font-semibold text-[#1F2937]">Total Revenue</h3>
-          <p className="text-sm text-[#6B7280]">For the last 3 months</p>
+          <p className="text-sm text-[#6B7280]">
+            {period === "3months" ? "For the last 3 months" : period === "6months" ? "For the last 6 months" : "For the last year"}
+          </p>
           <div className="mt-2">
             <p className="text-2xl font-bold text-[#1078CF]">{formatCurrency(totalRevenue)}</p>
             <p className="text-xs text-[#10B981] mt-1">
@@ -80,10 +83,10 @@ export default function RevenueChart({ data }: RevenueChartProps) {
           </div>
         </div>
         
-        {/* Period selector - for future expansion */}
+        {/* Period selector */}
         <div className="flex gap-2 bg-gray-50 rounded-lg p-1">
           <button
-            onClick={() => setPeriod("3months")}
+            onClick={() => onPeriodChange?.("3months")}
             className={`px-3 py-1 text-xs rounded-md transition-colors ${
               period === "3months"
                 ? "bg-white text-[#1078CF] font-semibold shadow-sm"
@@ -93,26 +96,22 @@ export default function RevenueChart({ data }: RevenueChartProps) {
             3M
           </button>
           <button
-            onClick={() => setPeriod("6months")}
+            onClick={() => onPeriodChange?.("6months")}
             className={`px-3 py-1 text-xs rounded-md transition-colors ${
               period === "6months"
                 ? "bg-white text-[#1078CF] font-semibold shadow-sm"
                 : "text-[#6B7280] hover:text-[#1F2937]"
             }`}
-            disabled
-            title="Coming soon"
           >
             6M
           </button>
           <button
-            onClick={() => setPeriod("year")}
+            onClick={() => onPeriodChange?.("year")}
             className={`px-3 py-1 text-xs rounded-md transition-colors ${
               period === "year"
                 ? "bg-white text-[#1078CF] font-semibold shadow-sm"
                 : "text-[#6B7280] hover:text-[#1F2937]"
             }`}
-            disabled
-            title="Coming soon"
           >
             1Y
           </button>
@@ -130,7 +129,11 @@ export default function RevenueChart({ data }: RevenueChartProps) {
         </div>
 
         {/* Chart bars */}
-        <div className="flex-1 grid grid-cols-3 gap-6 items-end h-64">
+        <div className={`flex-1 grid items-end h-64 ${
+          period === "3months" ? "grid-cols-3 gap-6" :
+          period === "6months" ? "grid-cols-6 gap-3" :
+          "grid-cols-12 gap-2"
+        }`}>
           {safeData.map((d, index) => {
             const heightPercent = (d.value / max) * 100;
             const isHighest = d.value === maxValue;

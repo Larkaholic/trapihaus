@@ -50,18 +50,21 @@ export default function DashboardPage() {
   const [revenue, setRevenue] = useState<RevenueDataPoint[]>([]);
   const [reservations, setReservations] = useState<ReservationItem[]>([]);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [revenuePeriod, setRevenuePeriod] = useState<"3months" | "6months" | "year">("3months");
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const auth = getFirebaseAuth();
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUserName(user.displayName || user.email?.split("@")[0] || "User");
+        setUserId(user.uid);
 
         try {
           // Fetch all dashboard data in parallel
           const [statsData, revenueData, reservationsData, reviewsData] = await Promise.all([
             getDashboardStats(user.uid),
-            getRevenueData(user.uid),
+            getRevenueData(user.uid, revenuePeriod),
             getRecentReservations(user.uid, 5),
             getLatestReviews(user.uid, 3),
           ]);
@@ -77,13 +80,17 @@ export default function DashboardPage() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [revenuePeriod]);
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 xl:grid-cols-[65%_35%] gap-6">
         <SummaryCards userName={userName} stats={stats || undefined} />
-        <RevenueChart data={revenue} />
+        <RevenueChart 
+          data={revenue} 
+          period={revenuePeriod}
+          onPeriodChange={setRevenuePeriod}
+        />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">

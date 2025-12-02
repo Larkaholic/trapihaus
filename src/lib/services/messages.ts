@@ -107,12 +107,13 @@ export async function getUserThreads(userId: string): Promise<MessageThread[]> {
 		getDocs(asGuestQuery)
 	]);
 	
-	const threads: MessageThread[] = [];
+	// Use a Map to prevent duplicates (in case user appears as both host and guest)
+	const threadsMap = new Map<string, MessageThread>();
 	
 	// Process host threads
 	hostThreads.forEach((doc) => {
 		const data = doc.data();
-		threads.push({
+		threadsMap.set(doc.id, {
 			id: doc.id,
 			...data,
 			lastMessageAt: data.lastMessageAt instanceof Timestamp ? data.lastMessageAt.toDate() : new Date(),
@@ -123,17 +124,21 @@ export async function getUserThreads(userId: string): Promise<MessageThread[]> {
 	
 	// Process guest threads
 	guestThreads.forEach((doc) => {
-		const data = doc.data();
-		threads.push({
-			id: doc.id,
-			...data,
-			lastMessageAt: data.lastMessageAt instanceof Timestamp ? data.lastMessageAt.toDate() : new Date(),
-			createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(),
-			updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : new Date(),
-		} as MessageThread);
+		// Only add if not already present (prevents duplicates)
+		if (!threadsMap.has(doc.id)) {
+			const data = doc.data();
+			threadsMap.set(doc.id, {
+				id: doc.id,
+				...data,
+				lastMessageAt: data.lastMessageAt instanceof Timestamp ? data.lastMessageAt.toDate() : new Date(),
+				createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(),
+				updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : new Date(),
+			} as MessageThread);
+		}
 	});
 	
-	// Sort by last message time
+	// Convert to array and sort by last message time
+	const threads = Array.from(threadsMap.values());
 	return threads.sort((a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime());
 }
 

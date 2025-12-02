@@ -50,14 +50,24 @@ export default function MessagesPage() {
       try {
         setLoading(true);
         const userThreads = await getUserThreads(user.uid);
-        setThreads(userThreads);
+        
+        // Remove duplicates by creating a Map with thread IDs as keys
+        const uniqueThreadsMap = new Map<string, MessageThread>();
+        userThreads.forEach(thread => {
+          if (!uniqueThreadsMap.has(thread.id)) {
+            uniqueThreadsMap.set(thread.id, thread);
+          }
+        });
+        const uniqueThreads = Array.from(uniqueThreadsMap.values());
+        
+        setThreads(uniqueThreads);
         
         // Set active thread from URL or first available thread
-        if (threadIdFromUrl && userThreads.some(t => t.id === threadIdFromUrl)) {
+        if (threadIdFromUrl && uniqueThreads.some(t => t.id === threadIdFromUrl)) {
           setActiveId(threadIdFromUrl);
           setShowThreads(false); // Auto-open chat on mobile
-        } else if (userThreads.length > 0 && !activeId) {
-          setActiveId(userThreads[0].id);
+        } else if (uniqueThreads.length > 0 && !activeId) {
+          setActiveId(uniqueThreads[0].id);
         }
       } catch (error) {
         console.error("❌ Error fetching threads:", error);
@@ -105,7 +115,17 @@ export default function MessagesPage() {
       
       // Refresh threads to update last message
       const userThreads = await getUserThreads(user.uid);
-      setThreads(userThreads);
+      
+      // Remove duplicates
+      const uniqueThreadsMap = new Map<string, MessageThread>();
+      userThreads.forEach(thread => {
+        if (!uniqueThreadsMap.has(thread.id)) {
+          uniqueThreadsMap.set(thread.id, thread);
+        }
+      });
+      const uniqueThreads = Array.from(uniqueThreadsMap.values());
+      
+      setThreads(uniqueThreads);
       
       setInput("");
     } catch (error) {
@@ -116,12 +136,22 @@ export default function MessagesPage() {
     }
   };
 
-  // Filter threads by search
+  // Filter threads by search and ensure no duplicates
   const filteredThreads = useMemo(() => {
-    if (!searchQuery.trim()) return threads;
+    // First, deduplicate threads
+    const uniqueThreadsMap = new Map<string, MessageThread>();
+    threads.forEach(thread => {
+      if (!uniqueThreadsMap.has(thread.id)) {
+        uniqueThreadsMap.set(thread.id, thread);
+      }
+    });
+    const uniqueThreads = Array.from(uniqueThreadsMap.values());
+    
+    // Then apply search filter
+    if (!searchQuery.trim()) return uniqueThreads;
     
     const query = searchQuery.toLowerCase();
-    return threads.filter(
+    return uniqueThreads.filter(
       (t) =>
         (user?.uid === t.hostId ? t.guestName : t.hostName).toLowerCase().includes(query) ||
         t.propertyName.toLowerCase().includes(query) ||
