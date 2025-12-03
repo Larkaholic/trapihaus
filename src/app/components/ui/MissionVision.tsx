@@ -23,8 +23,8 @@ export default function MissionVision({
             <h2 className="text-4xl md:text-5xl font-bold mb-6 font-lexend">
               Our <span className="text-[#1078CF]">Mission</span>
             </h2>
-            <p className="text-gray-600 text-lg font-lexend leading-relaxed">
-              <span className="text-[#83C12C] font-semibold">{missionText || 'To connect travelers with safe and affordable accommodations'}</span> {missionText ? null : 'while supporting compliant local hosts. We strive to create a marketplace where trust, transparency, and community values are at the forefront of every interaction.'}
+            <p className="text-lg font-lexend leading-relaxed text-[#83C12C] font-bold text-[24px]">
+              To connect travelers with safe and affordable accommodations <span className="text-black"> while supporting compliant local hosts. We strive to create a marketplace where trust, transparency, and community values are at the forefront of every interaction.</span>
             </p>
           </div>
           
@@ -51,8 +51,8 @@ export default function MissionVision({
             <h2 className="text-4xl md:text-5xl font-bold mb-6 font-lexend">
               Our <span className="text-[#1078CF]">Vision</span>
             </h2>
-            <p className="text-gray-600 text-lg font-lexend leading-relaxed">
-              <span className="text-[#F68109] font-semibold">{visionText || 'To become the most trusted local accommodation marketplace across the Philippines.'}</span> {visionText ? null : 'We envision a future where every Filipino city has access to our platform, connecting quality accommodations with travelers while fostering economic growth in local communities.'}
+            <p className="text-[#F68109] text-lg font-lexend leading-relaxed font-bold text-[24px]">
+              To become the most trusted local accommodation marketplace across the Philippines.<span className="text-black"> We envision a future where every Filipino city has access to our platform, connecting quality accommodations with travelers while fostering economic growth in local communities.</span>
             </p>
           </div>
         </div>
