@@ -108,24 +108,11 @@ export default function Navbar() {
 
                 {/* Desktop Navigation */}
                 <div className="flex-1 hidden md:flex justify-center space-x-10 text-white text-[16px]">
-                        <Link 
-                            href={user ? "/Homescreen/home" : "/"} 
-                            className={mounted && (pathname === "/" || pathname === "/Homescreen/home") ? "font-black" : "font-medium"}
-                        >
-                            Home
-                        </Link>
-                        <Link href="/browse" className={mounted && pathname === "/browse" ? "font-black" : "font-medium"}>Browse Accommodations</Link>
-                        <Link href="/trips" className={mounted && pathname === "/trips" ? "font-black" : "font-medium"}>My Trips</Link>
-                        {user ? (
-                            <Link href="/dashboard" className={mounted && pathname === "/dashboard" ? "font-black" : "font-medium"}>Dashboard</Link>
-                        ) : (
-                            <button 
-                                onClick={() => setShowLoginModal(true)}
-                                className={mounted && pathname === "/dashboard" ? "font-black" : "font-medium"}
-                            >
-                                Dashboard
-                            </button>
-                        )}
+                        <Link href="/Homescreen/home" className={mounted && pathname === "/Homescreen/home" ? "font-black" : "font-medium"}>Home</Link>
+                        <Link href="/browse" className={mounted && pathname === "/browse" ? "font-black" : "font-medium"}>Browse</Link>
+                        <Link href="/about" className={mounted && pathname === "/about" ? "font-black" : "font-medium"}>About</Link>
+                        <Link href="/List" className={mounted && pathname === "/List" ? "font-black" : "font-medium"}>List Property</Link>
+                        <Link href="/Contact" className={mounted && pathname === "/Contact" ? "font-black" : "font-medium"}>Contact</Link>
                 </div>
 
                 {/* Mobile Hamburger Button */}
@@ -218,9 +205,9 @@ export default function Navbar() {
                 >
                     <div className="py-2">
                         <Link 
-                            href={user ? "/Homescreen/home" : "/"} 
+                            href="/Homescreen/home" 
                             onClick={() => setMobileMenuOpen(false)}
-                            className={`block px-6 py-3 text-sm ${mounted && (pathname === "/" || pathname === "/Homescreen/home") ? "font-bold text-[#1078CF] bg-blue-50" : "text-gray-700"} hover:bg-gray-50`}
+                            className={`block px-6 py-3 text-sm ${mounted && pathname === "/Homescreen/home" ? "font-bold text-[#1078CF] bg-blue-50" : "text-gray-700"} hover:bg-gray-50`}
                         >
                             Home
                         </Link>
@@ -229,34 +216,29 @@ export default function Navbar() {
                             onClick={() => setMobileMenuOpen(false)}
                             className={`block px-6 py-3 text-sm ${mounted && pathname === "/browse" ? "font-bold text-[#1078CF] bg-blue-50" : "text-gray-700"} hover:bg-gray-50`}
                         >
-                            Browse Accommodations
+                            Browse
                         </Link>
                         <Link 
-                            href="/trips" 
+                            href="/about" 
                             onClick={() => setMobileMenuOpen(false)}
-                            className={`block px-6 py-3 text-sm ${mounted && pathname === "/trips" ? "font-bold text-[#1078CF] bg-blue-50" : "text-gray-700"} hover:bg-gray-50`}
+                            className={`block px-6 py-3 text-sm ${mounted && pathname === "/about" ? "font-bold text-[#1078CF] bg-blue-50" : "text-gray-700"} hover:bg-gray-50`}
                         >
-                            My Trips
+                            About
                         </Link>
-                        {user ? (
-                            <Link 
-                                href="/dashboard" 
-                                onClick={() => setMobileMenuOpen(false)}
-                                className={`block px-6 py-3 text-sm ${mounted && pathname === "/dashboard" ? "font-bold text-[#1078CF] bg-blue-50" : "text-gray-700"} hover:bg-gray-50`}
-                            >
-                                Dashboard
-                            </Link>
-                        ) : (
-                            <button 
-                                onClick={() => {
-                                    setMobileMenuOpen(false);
-                                    setShowLoginModal(true);
-                                }}
-                                className={`block w-full text-left px-6 py-3 text-sm ${mounted && pathname === "/dashboard" ? "font-bold text-[#1078CF] bg-blue-50" : "text-gray-700"} hover:bg-gray-50`}
-                            >
-                                Dashboard
-                            </button>
-                        )}
+                        <Link 
+                            href="/List" 
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={`block px-6 py-3 text-sm ${mounted && pathname === "/List" ? "font-bold text-[#1078CF] bg-blue-50" : "text-gray-700"} hover:bg-gray-50`}
+                        >
+                            List Property
+                        </Link>
+                        <Link 
+                            href="/Contact" 
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={`block px-6 py-3 text-sm ${mounted && pathname === "/Contact" ? "font-bold text-[#1078CF] bg-blue-50" : "text-gray-700"} hover:bg-gray-50`}
+                        >
+                            Contact
+                        </Link>
 
                         {user && (
                             <>

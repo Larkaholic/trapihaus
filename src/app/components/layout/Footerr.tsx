@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export default function Footerr() {
   return (
-    <footer className="bg-[#1078CF] text-white rounded-t-[40px] relative mt-20 z-10">
+    <footer className="bg-[#1078CF] text-white rounded-t-[40px] relative z-10">
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 lg:gap-16">
           {/* Brand Section */}
