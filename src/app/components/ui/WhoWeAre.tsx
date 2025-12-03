@@ -30,7 +30,7 @@ export default function WhoWeAre({
             {paragraphs.map((paragraph, index) => (
               <p 
                 key={index} 
-                className={`text-[#212121] text-lg font-lexend leading-relaxed ${
+                className={`text-[#212121] text-[24px] font-lexend leading-relaxed font-regular ${
                   index < paragraphs.length - 1 ? 'mb-6' : ''
                 }`}
                 dangerouslySetInnerHTML={{ __html: paragraph }}
