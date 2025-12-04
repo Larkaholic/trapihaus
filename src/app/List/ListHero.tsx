@@ -20,7 +20,7 @@ export default function ListHero() {
       <div className="grid md:grid-cols-2 gap-2 items-center">
         {/* Left */}
         <div>
-          <h1 className="text-4xl md:text-5xl lg:text-[72px] font-extrabold leading-tight font-lexend mb-6">
+          <h1 className="text-4xl md:text-[72px] lg:text-[72px] font-extrabold leading-tight font-lexend mb-6">
             List your Property
             <br />
             on <span className="text-blue-600">Trapihaus</span>
@@ -28,7 +28,7 @@ export default function ListHero() {
           <p className="text-gray-600 text-lg md:text-xl font-lexend mb-8 max-w-xl leading-relaxed">
             Turn your space into income. Connect with travelers looking for safe, quality, and affordable accommodations in Baguio City and beyond.
           </p>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-4 mb-8">
             <a
               href="/ListProperty"
               className="inline-block bg-[#83C12C] hover:bg-green-600 text-white font-semibold px-10 py-4 rounded-2xl text-lg transition-colors font-lexend shadow-sm"
@@ -36,8 +36,8 @@ export default function ListHero() {
               Get Started
             </a>
           </div>
-
-          <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl">
+          <hr />
+          <div className="mt-11 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl">
             {stats.map(s => (
               <div key={s.label} className={`border ${s.color} rounded-xl p-2 text-center bg-white/50 backdrop-blur-sm`}>
                 <p className={`text-[32px] font-bold font-lexend mb-1 ${s.textColor ?? 'text-blue-600'}`}>{s.value}</p>

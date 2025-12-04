@@ -22,7 +22,7 @@ export default function ReadyToEarn() {
             <p className="text-white/90 mb-6 font-lexend">Join Trapihaus today and connect with thousands of travelers</p>
 
             <div className="flex items-center justify-center">
-                <Link href="/ListProperty/create" className="inline-block bg-[#83C12C] hover:bg-green-600 text-white font-semibold px-5 py-3 rounded-full shadow-lg transition">
+                <Link href="/ListProperty/create" className="inline-block bg-[#83C12C] hover:bg-green-600 text-white font-semibold px-6 py-4 rounded-2xl shadow-lg transition">
                 List Your Property Now
                 </Link>
             </div>
