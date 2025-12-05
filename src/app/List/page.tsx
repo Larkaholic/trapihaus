@@ -4,7 +4,7 @@ import Navbar from "../components/layout/Navbar";
 import ListHero from "./ListHero";
 import WhyList from "./WhyList";
 import ListHowItWorks from "./ListHowItWorks";
-import ListJoinUs from "./ListJoinUs";
+import ListJoinUs from "../components/sections/JoinUs";
 import ReadyToEarn from "./ReadyToEarn";
 import Footerr from "../components/layout/Footerr";
 

@@ -64,7 +64,7 @@ export default function Checkout() {
 
 	// Payment
 	type Method = "card" | "cash" | "gcash";
-	const [method, setMethod] = useState<Method>("card");
+	const [method, setMethod] = useState<Method>("cash");
 	const [cardName, setCardName] = useState("Juan Dela Cruz");
 	const [cardNumber, setCardNumber] = useState("");
 	const [expiry, setExpiry] = useState("");
@@ -411,10 +411,10 @@ export default function Checkout() {
 					<div className="bg-white rounded-[24px] p-6 border border-[#F3F4F6] shadow-sm">
 						<h2 className="text-xl font-semibold mb-5">Payment Method</h2>
 						<div className="space-y-3">
-							<label className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-3 ${method==='card' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
-								<span className="flex items-center gap-2 text-sm">
-									<input type="radio" name="pm" checked={method==='card'} onChange={()=>setMethod('card')} />
-									Debit/Credit Card
+							<label className="flex items-center justify-between gap-3 rounded-xl border px-3 py-3 border-gray-200 opacity-50 cursor-not-allowed bg-gray-50">
+								<span className="flex items-center gap-2 text-sm text-gray-400">
+									<input type="radio" name="pm" checked={false} disabled className="cursor-not-allowed" />
+									Debit/Credit Card (Unavailable)
 								</span>
 								<span className="text-gray-300">▢</span>
 							</label>
@@ -425,10 +425,10 @@ export default function Checkout() {
 								</span>
 								<span className="text-gray-300">▢</span>
 							</label>
-							<label className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-3 ${method==='gcash' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
-								<span className="flex items-center gap-2 text-sm">
-									<input type="radio" name="pm" checked={method==='gcash'} onChange={()=>setMethod('gcash')} />
-									GCash
+							<label className="flex items-center justify-between gap-3 rounded-xl border px-3 py-3 border-gray-200 opacity-50 cursor-not-allowed bg-gray-50">
+								<span className="flex items-center gap-2 text-sm text-gray-400">
+									<input type="radio" name="pm" checked={false} disabled className="cursor-not-allowed" />
+									GCash (Unavailable)
 								</span>
 								<span className="text-gray-300">▢</span>
 							</label>
