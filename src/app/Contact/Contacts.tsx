@@ -47,7 +47,7 @@ const items: ContactItem[] = [
   },
   {
     label: "Location",
-    value: "support@trapihaus.com",
+    value: "Baguio City, Philippines",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"

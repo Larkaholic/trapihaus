@@ -37,6 +37,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  // TODO: send email or persist to DB; ensure secrets are server-side only.
-  return NextResponse.json({ ok: true });
+  const { name, email, subject, message } = parsed.data;
+
+  // Log the contact message (in production, send to email service or store in DB)
+  console.log("Contact form submission:", {
+    name,
+    email,
+    subject,
+    message,
+    ip,
+    timestamp: new Date().toISOString(),
+  });
+
+  // TODO: Implement email notification using a service like:
+  // - Resend (resend.com) - recommended for Next.js
+  // - SendGrid
+  // - AWS SES
+  // - Nodemailer with SMTP
+
+  return NextResponse.json({ 
+    ok: true,
+    message: "Message received. We'll get back to you shortly."
+  });
 }
