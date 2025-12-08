@@ -13,8 +13,19 @@ interface TestimonialProps {
 }
 
 const TestimonialCard = ({ quote, name, role, avatar, rating }: TestimonialProps) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, Math.random() * 400);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+    <div className={`bg-white p-6 rounded-2xl shadow-sm border border-gray-100 transition-all duration-700 ${
+      isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+    }`}>
       {/* Star Rating */}
       <div className="flex items-center gap-1 mb-4">
         {[...Array(5)].map((_, i) => (

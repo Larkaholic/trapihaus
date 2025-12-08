@@ -9,6 +9,7 @@ export default function Lastt() {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const auth = getFirebaseAuth();
@@ -17,6 +18,10 @@ export default function Lastt() {
     });
 
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    setIsVisible(true);
   }, []);
 
   const handleBrowseClick = () => {
@@ -58,28 +63,34 @@ export default function Lastt() {
 
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center text-white">
-        <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 font-lexend leading-tight">
+        <h2 className={`text-4xl md:text-5xl lg:text-6xl font-bold mb-6 font-lexend leading-tight transition-all duration-1000 delay-200 ${
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-8'
+        }`}>
           Ready to Experience<br />
           Trapihaus?
         </h2>
         
-        <p className="text-lg md:text-xl mb-8 font-lexend opacity-90 max-w-2xl mx-auto">
+        <p className={`text-lg md:text-xl mb-8 font-lexend opacity-90 max-w-2xl mx-auto transition-all duration-1000 delay-400 ${
+          isVisible ? 'opacity-90 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}>
           Whether you&apos;re looking for a safe, budget-friendly stay or want to earn as a host,<br />
           Trapihaus makes it simple.
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+        <div className={`flex flex-col sm:flex-row gap-4 justify-center items-center transition-all duration-1000 delay-600 ${
+          isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+        }`}>
           <button 
             onClick={handleBrowseClick}
-            className="bg-[#83C12C] hover:bg-green-600 text-white font-semibold py-4 px-8 rounded-2xl transition-colors duration-200 font-lexend text-lg min-w-[200px]"
+            className="bg-[#83C12C] hover:bg-green-600 text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-200 font-lexend text-lg min-w-[200px] hover:scale-105"
           >
             Browse Accommodations
           </button>
           
           <button 
             onClick={handleBecomeHostClick}
-            className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 px-8 rounded-2xl transition-colors duration-200 font-lexend text-lg min-w-[200px]"
+            className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-200 font-lexend text-lg min-w-[200px] hover:scale-105"
           >
             Become a Host
           </button>

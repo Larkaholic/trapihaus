@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
 interface CategoryCardProps {
   title: string;
@@ -8,13 +9,24 @@ interface CategoryCardProps {
   image: string;
   className?: string;
   onClick: () => void;
+  delay?: number;
 }
 
-const CategoryCard = ({ title, description, image, className = "", onClick }: CategoryCardProps) => {
+const CategoryCard = ({ title, description, image, className = "", onClick, delay = 0 }: CategoryCardProps) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
   return (
     <div 
       onClick={onClick}
-      className={`relative rounded-3xl overflow-hidden group cursor-pointer ${className}`}
+      className={`relative rounded-3xl overflow-hidden group cursor-pointer transition-all duration-700 ${className} ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+      }`}
     >
       {/* Background Image */}
       <div className="relative h-64 md:h-80">
@@ -66,6 +78,7 @@ export default function Categories() {
             description="A comfortable space built for longer stays."
             image="/apartments.jpg"
             onClick={() => handleCategoryClick("apartment")}
+            delay={0}
           />
             
             <CategoryCard
@@ -73,6 +86,7 @@ export default function Categories() {
             description="Affordable short stays, perfect for quick trips."
             image="/transients.jpg"
             onClick={() => handleCategoryClick("transient")}
+            delay={200}
             />
           {/* Bottom Row - Hotels spanning full width */}
           <CategoryCard
@@ -81,6 +95,7 @@ export default function Categories() {
             image="/hotels.jpg"
             className="md:col-span-2"
             onClick={() => handleCategoryClick("hotel")}
+            delay={400}
           />
         </div>
       </div>

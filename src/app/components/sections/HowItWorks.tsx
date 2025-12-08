@@ -1,16 +1,29 @@
 "use client";
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
+
 interface StepProps {
   number: string;
   title: string;
   description: string;
   bgColor: string;
   textColor: string;
+  delay?: number;
 }
 
-const Step = ({ number, title, description, bgColor, textColor }: StepProps) => {
+const Step = ({ number, title, description, bgColor, textColor, delay = 0 }: StepProps) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
   return (
-    <div className="flex items-start gap-4 mb-8">
+    <div className={`flex items-start gap-4 mb-8 transition-all duration-700 ${
+      isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
+    }`}>
       {/* Number Circle */}
       <div className={`w-16 h-16 ${bgColor} ${textColor} rounded-full flex items-center justify-center text-xl font-bold font-lexend flex-shrink-0`}>
         {number}
@@ -26,12 +39,20 @@ const Step = ({ number, title, description, bgColor, textColor }: StepProps) => 
 };
 
 export default function HowItWorks() {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
+
   return (
     <section className="py-16 bg-white mb-[100px]">
       <div className="max-w-full mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Images Section */}
-          <div className="relative">
+          <div className={`relative transition-all duration-1000 delay-200 ${
+            isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+          }`}>
             {/* Main Top Image */}
             <div className="relative">
               <div className="w-full h-[480px] relative rounded-2xl overflow-hidden">
@@ -77,6 +98,7 @@ export default function HowItWorks() {
                 description="Search through our curated collection of safe and compliant accommodations in Baguio City."
                 bgColor="bg-blue-600"
                 textColor="text-white"
+                delay={400}
               />
               
               <Step
@@ -85,6 +107,7 @@ export default function HowItWorks() {
                 description="Reserve your chosen accommodation with our secure booking system and flexible payment options."
                 bgColor="bg-green-500"
                 textColor="text-white"
+                delay={600}
               />
               
               <Step
@@ -93,6 +116,7 @@ export default function HowItWorks() {
                 description="Enjoy your stay knowing you're in a verified, safe accommodation with 24/7 support available."
                 bgColor="bg-orange-500"
                 textColor="text-white"
+                delay={800}
               />
             </div>
           </div>

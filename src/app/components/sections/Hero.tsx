@@ -1,9 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
 export default function Hero() {
   const router = useRouter();
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
 
   const handleSearchClick = () => {
     router.push("/browse");
@@ -18,17 +24,23 @@ export default function Hero() {
       >
         <div className="absolute inset-0 bg-black opacity-40 pointer-events-none" />
         <div className="text-center text-white max-w-4xl px-4 relative z-10">
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 font-lexend">
+          <h1 className={`text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 font-lexend transition-all duration-1000 delay-200 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-8'
+          }`}>
             Find Safe & Affordable Stays in Baguio
           </h1>
-          <p className="text-base md:text-lg lg:text-xl mb-8 md:mb-12 font-lexend">
+          <p className={`text-base md:text-lg lg:text-xl mb-8 md:mb-12 font-lexend transition-all duration-1000 delay-500 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}>
             Browse verified apartments, transients, and hotels — trusted by students, tourists, and locals.
           </p>
         </div>
       </div>
 
       {/* Search bar positioned halfway hanging at the bottom */}
-      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-full max-w-5xl px-4 md:px-6 z-20">
+      <div className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-full max-w-5xl px-4 md:px-6 z-20 transition-all duration-1000 delay-700 ${
+        isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+      }`}>
         <div className="bg-white rounded-[24px] md:rounded-[48px] p-4 mt-20 md:mt-0 md:p-6 shadow-2xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 items-start">
             <div className="flex items-start text-center md:border-r-2 border-gray-300 pb-4 md:pb-0 border-b md:border-b-0">

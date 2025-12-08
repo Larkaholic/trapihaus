@@ -40,15 +40,25 @@ const PropertyTypeTab = ({
   </button>
 );
 
-const PropertyCard = ({ listing }: { listing: Listing }) => {
+const PropertyCard = ({ listing, index }: { listing: Listing; index?: number }) => {
   const router = useRouter();
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, (index || 0) * 150);
+    return () => clearTimeout(timer);
+  }, [index]);
   
   const handleViewDetails = () => {
     router.push(`/PropertyListing#${listing.id}`);
   };
   
   return (
-    <div className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100">
+    <div className={`bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-700 border border-gray-100 ${
+      isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95'
+    }`}>
       {/* Image Container */}
       <div className="relative h-48 rounded-3xl overflow-hidden">
         <div className="absolute inset-0 p-[16px]">
@@ -279,8 +289,8 @@ export default function TopPicks() {
         {/* Property Grid */}
         {!loading && !error && filteredListings.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
-            {filteredListings.slice(0, 6).map((listing) => (
-              <PropertyCard key={listing.id} listing={listing} />
+            {filteredListings.slice(0, 6).map((listing, index) => (
+              <PropertyCard key={listing.id} listing={listing} index={index} />
             ))}
           </div>
         )}
