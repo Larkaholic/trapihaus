@@ -44,6 +44,8 @@ const Step = ({ number, title, description, bgColor, textColor, delay = 0 }: Ste
       </div>
 
       {/* Arrow indicator on hover */}
+      {/* Arrow indicator on hover */}
+      {/* Arrow indicator on hover */}
       <div className={`flex items-center transition-all duration-300 ${
         isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
       }`}>
